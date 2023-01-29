@@ -48,8 +48,8 @@
   },
   "dependencies": {
     "jsdom": "^21.1.0",
-    "terser": "^5.16.1",
-    "pretty": "^2.0.0"
+    "pretty": "^2.0.0",
+    "terser": "^5.16.1"
   },
   "devDependencies": {
     "@types/node": "^18.11.18",

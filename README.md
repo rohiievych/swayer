@@ -1,4 +1,4 @@
-# Swayer - schema based UI engine 👀
+# Swayer - schema based UI engine
 
 [![npm version](https://img.shields.io/npm/v/swayer)](https://www.npmjs.com/package/swayer)
 [![npm downloads/month](https://img.shields.io/npm/dm/swayer.svg)](https://www.npmjs.com/package/swayer)
@@ -6,110 +6,301 @@
 [![snyk](https://snyk.io/test/github/metarhia/swayer/badge.svg)](https://snyk.io/test/github/metarhia/swayer)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/metarhia/swayer/blob/main/LICENSE)
 
-**UI web framework** for controllable and low overhead development.
+**Comprehensive UI engine** for fast and low overhead JavaScript development
+
+## Before we begin
+
+Find your way to help ukrainians defend the world of freedom and democracy:
+
+- Support Ukraine at [United24](https://u24.gov.ua/)
+- Support [Ukrainian Armed Forces](https://bank.gov.ua/en/news/all/natsionalniy-bank-vidkriv-spetsrahunok-dlya-zboru-koshtiv-na-potrebi-armiyi)
+- Make a donation to [Come Back Alive](https://savelife.in.ua/en/donate-en) charity foundation
+- Find more donation targets at [Stand For Ukraine](https://standforukraine.com/)
+
+**Why is this so important?**
+
+My home country has been ruined by terrible war started by Russian Federation.
+Thousands of people lost their lives and homes. Millions are affected by acts of terrorism,
+which occur on daily basis. They say they came to protect someone, but instead cruelly kill
+children and elderly people, erase whole cities from the face of the earth, because they simply don't
+want Ukraine to exist. This is insane to have such reality in the 21st century,
+so we must stop the global evil from expanding. Arm Ukraine - give this world a chance!
+
+**This technological product is prohibited for use
+by citizens of #RussiaIsATerroristState.**
+
+## Quick start
+
+Install Swayer CLI
+
+```shell
+npm i -g swayer
+```
+
+Create starter project
+
+```shell
+swr create mySwayerProject
+cd mySwayerProject
+```
+
+Start application
+
+```shell
+npm start
+```
+
+## Showcase
+
+- See
+  online [Todo Application demo](https://metarhia.github.io/swayer/examples/todo-app/)
+- Play with [example](https://github.com/metarhia/swayer/tree/main/examples/todo-app) code to
+  investigate how it works
 
 ## Description
 
-Swayer is a pure JavaScript framework, which enables **plain objects to describe document
-structure, styling and behavior**. Swayer developers provide initial data to be
-rendered and get **dynamic components** for further management. This instrument
-is provided for **low-level development** and delivering fully **declarative
-JSON DSLs** (domain-specific languages) describing
-**application domains**.
+Swayer is a powerful user interface engine, which enables **JavaScript to describe document
+structure, styling and behavior**. This instrument is provided for creating rich
+web applications using lots of JavaScript mechanisms out-of-the-box. **You can build
+a wide range of application types from simple static site, which can be rendered even
+from JSON data, to stateful single page applications with complex business logic.**
 
-#### Why not to stick with modified HTML like JSX?
+#### UI Engine vs UI Framework vs UI Library
 
-While HTML syntax is really well known - it was created for describing static
-web documents, not interactive apps. In any case we have to create abstractions
-to make web page dynamic, so we use plain objects with the full power of
-JavaScript to create DOM tree with almost no overhead in the fastest way.
+The difference between these types of software is a responsibility scope. You import
+a library to help you with something, e.g. rendering, while a framework provides a generic
+structure reducing amount of trivial work. UI engine is designed to encapsulate a powerful
+logic, which performs a task. In case of Swayer, **it consumes component schemas and outputs
+dynamic JavaScript application hiding lots of complexities under the hood.**
+
+#### Why not to stick with hybrid syntax like JSX?
+
+The answer is simple - you still play with HTML syntax, which has to be parsed before it can
+be processed with JavaScript. That's a quite big overhead. While HTML syntax is really
+well known - it was created for describing static web documents, not interactive apps.
+In any case we have to create abstractions to make web page dynamic, so we use plain
+objects with the full power of JavaScript to create DOM tree in the fastest way.
 
 #### Why not to stick with CSS preprocessors like Stylus or Sass?
 
 You simply don't need to use different CSS-like syntax with Swayer. JavaScript
-is more powerful and standardized language than any other style preprocessors.
+is more powerful and standardized language than any style preprocessor.
 Moreover, Swayer provides extended standard style declaration for convenience
 and brings selector abstraction, so you can just share or toggle styles as a
-simple JavaScript object.
+simple JavaScript object. Swayer will distribute all your CSS rules across the app
+avoiding duplication and providing encapsulation.
 
-**Important: Do not assume HTML or CSS to be legacy languages!**<br>
-Swayer compiles application down to the pure HTML and CSS while **making it
-consistent with JavaScript**.
+**Important: do not assume HTML or CSS to be legacy languages!**<br>
+Swayer compiles component schemas down to the pure HTML/CSS on server side or
+directly to DOM/CSSOM in browsers while **making it consistent with your JavaScript logic**.
 
 ## Features:
 
-- Prue JavaScript everywhere
-- Fast asynchronous rendering
-- No need to use HTML/CSS preprocessors
-- No 3rd party dependencies in runtime
-- Declarative schema based components
-- Configurable styles and animations
-- Inline/preload/lazy component loading
-- Module encapsulation
-- Framework API injection
-- Reflective component features
-- Local state and methods
-- System and custom bubbling events
-- Scoped intercomponent messaging
-- Component lifecycle hooks
+- #### General
+  - Tiny runtime ~17kb minified and gzipped
+  - Pure modern JavaScript everywhere
+  - Focus on performance and fast development
+  - MVVM design pattern
+  - ES6 modules as a single module system
+  - Fast asynchronous rendering
+  - No 3rd party dependencies in browser runtime
+  - Works in modern browsers and Node.js
+  - Server side rendering with hydration
+  - Environment modules
 
-## Quick start
+- #### Components
+  - Declarative schema based components
+  - Atomicity and laziness by default
+  - Reactive state models
+  - Data binding
+  - Element reflection
+  - Context injection
+  - Namespaces
+  - Routing
+  - Lifecycle hooks
+- #### Styling
+  - CSS selector abstraction
+  - Extended property syntax
+  - Sharable style rules
+  - Animations
+  - Data binding
+- #### Communication
+  - Events: bottom-up system or custom events
+  - Channels: scoped cross-component messages
 
-- See
-  online [Todo Application demo](https://metarhia.github.io/swayer/examples/todo-app/)
-- Play with [examples](https://github.com/metarhia/swayer/tree/main/examples) to
-  investigate how it works
+- #### Development tools
+  - Command Line Interface (CLI)
+    - create
+    - build
+    - render
+    - serve
+  - Typescript via JsDoc comments
+  - ESLint
 
-Swayer component
-example: [examples/todo-app/app/features/todo/todo.component.js](https://github.com/metarhia/swayer/blob/main/examples/todo-app/app/features/todo/todo.component.js)
+## Code examples
+
+Simple head component:
 
 <!-- eslint-skip -->
 
 ```js
+// Schema factory returning a component schema
+// title is passed as input from other schemas
 /** @returns {Schema} */
-export default () => ({
-  tag: 'section',
-  meta: import.meta,
-  styles: todoSectionStyles(),
-  state: {
-    isMainAdded: false,
-  },
-  methods: {
-    addMain() {
-      this.children.push(createMain(), createFooter());
-      this.state.isMainAdded = true;
+export default (title) => ({
+  tag: 'head',
+  // Children define component structure,
+  // keep it readably flat and avoid high level of nesting
+  children: [
+    {
+      tag: 'title',
+      text: title,
     },
-    removeMain() {
-      this.children.splice(1, 2);
-      this.state.isMainAdded = false;
+    {
+      tag: 'link',
+      attrs: {
+        rel: 'icon',
+        type: 'image/png',
+        href: '/assets/favicon.png',
+      },
     },
-    updateRemaining() {
-      const footer = createFooter();
-      this.children.splice(2, 1, footer);
+    {
+      tag: 'meta',
+      attrs: {
+        charset: 'utf-8',
+      },
     },
-    addTodo(todo) {
-      const scope = './main/main.component';
-      this.emitMessage('addTodoChannel', todo, { scope });
+    {
+      tag: 'meta',
+      attrs: {
+        name: 'viewport',
+        content: 'width=device-width, initial-scale=1.0',
+      },
     },
-  },
-  events: {
-    addTodoEvent({ detail: todo }) {
-      if (this.state.isMainAdded) this.methods.updateRemaining();
-      else this.methods.addMain();
-      this.methods.addTodo(todo);
-    },
-    todoChangeEvent() {
-      if (todoStore.todos.length > 0) this.methods.updateRemaining();
-      else this.methods.removeMain();
-    },
-  },
-  hooks: {
-    init() {
-      if (todoStore.todos.length > 0) this.methods.addMain();
-    },
-  },
-  children: [{ path: './header/header.component', base: import.meta.url }],
+  ],
 });
+```
+
+Advanced component with model and reactive state:
+
+<!-- eslint-skip -->
+
+```js
+// Use ES6 modules
+import { TodosModel } from './todos.model.js';
+
+/** @type {Styles} */
+const containerStyles = {
+  // Styles are written in JavaScript: no selectors, fully sharable
+  position: 'relative',
+  background: 'white',
+  boxShadow: `0 2px 4px 0 rgba(0, 0, 0, 0.2),
+              0 25px 50px 0 rgba(0, 0, 0, 0.1)`,
+};
+
+// Schema factory returning a component schema
+/** @returns {Schema<TodosModel>} */
+export default () => {
+  // Using models you can better separate you business logic
+  const todosModel = new TodosModel();
+  return {
+    tag: 'main',
+    styles: containerStyles,
+    model: todosModel,
+    children: [
+      {
+        // Namespaced schema reference
+        path: '@todos/input/input.component',
+        input: todosModel,
+      },
+      // Reaction is run on todosModel.state.show change
+      // This is how you update the view in declarative way,
+      // so forget about direct DOM access
+      ({ show }) => show && [
+        {
+          path: `@todos/list/list.component`,
+          input: todosModel,
+        },
+        {
+          path: `@todos/counts/counts.component`,
+          input: todosModel,
+        },
+      ],
+    ],
+  };
+};
+```
+
+<!-- eslint-skip -->
+
+```js
+import Storage from '../../utils/storage.js';
+
+// Models hold your data store and its mutations,
+// so that you can keep your components clear and readable
+export class TodosModel {
+  #storage = new Storage('swayer-todos');
+
+  // State is mandatory model property,
+  // keep reactive data here and bind it in components via reactions
+  /** @type {TodosState} */
+  state = {
+    show: false,
+    todos: [],
+    counts: {
+      completed: 0,
+      remaining: 0,
+    },
+  };
+
+  constructor() {
+    this.#load();
+    this.#updateVisibility();
+    this.calculateCounts();
+  }
+
+  addTodo(title) {
+    const data = { title, editing: false, completed: false };
+    this.state.todos.push(data);
+    this.#handleChanges();
+  }
+
+  removeTodo(index) {
+    this.state.todos.splice(index, 1);
+    this.#handleChanges();
+  }
+
+  clearCompleted() {
+    const todos = this.state.todos;
+    this.state.todos = todos.filter(({ completed }) => !completed);
+    this.#handleChanges();
+  }
+
+  calculateCounts() {
+    const todos = this.state.todos;
+    const completed = todos.filter(({ completed }) => completed).length;
+    const remaining = todos.length - completed;
+    this.state.counts = { completed, remaining };
+  }
+
+  save() {
+    this.#storage.save(this.state.todos);
+  }
+
+  #load() {
+    this.state.todos = this.#storage.retrieve();
+  }
+
+  #handleChanges() {
+    this.#updateVisibility();
+    this.calculateCounts();
+    this.save();
+  }
+
+  #updateVisibility() {
+    this.state.show = this.state.todos.length > 0;
+  }
+}
 ```
 
 ## Swayer documentation
@@ -117,36 +308,70 @@ export default () => ({
 ### 1. Terminology
 
 - **Developer** - you.
-- **Framework** - Swayer framework.
-- **Schema** - an object partially implementing component property interface.
-  Includes initial data provided by a developer.
-  - **Initial data** - data set associated with corresponding html node to be
-    rendered.
-  - **Schema reference** - an object describing reference configuration for lazy
-    loaded schema.
-  - **Lazy schema** - a schema loaded from a different module on demand.
-- **Component** - an object instantiated by the framework using schema. Provides
-  access to component API for developer.
-  - **Children** - an object extending Array class. Provides methods for
-    updating component children as a part of API.
-  - **API** - a set of properties and methods to help developer with component
-    management.
-  - **Hook** - a component lifecycle handler.
-- **Intercomponent messaging** - a way of organizing data flow between different
-  components based on channels feature.
-  - **Channel** - a pub/sub entity, that provides a name for scoped data
+- **Engine** - Swayer UI engine.
+- **Environment** - a module defining variables for app configuration.
+- **Event** - an object, which flows from children to parents using native bubbling
+  DOM events.
+- **Schema** - an object describing HTML element properties and structure.
+  Acts as an HTML template, but written in JavaScript with all its capabilities.
+- **Schema reference** - an object describing path and input for lazy loaded schema.
+- **Schema value** - a value, which can be a regular schema, schema reference or any
+    primitive value including nullish ones.
+- **Schema child** - schema value, array of schema values or reaction.
+- **Component** - an object instantiated by the engine using schema. Acts as
+    a context provided in schema methods, events, channels and lifecycle hooks.
+- **Component children** - an array of schema values or reactions describing component structure.
+- **Component API** - a set of properties and methods provided by engine to
+    help developer use its features.
+- **Hook** - a component lifecycle handler.
+- **Namespace** - a name, which encapsulates a part of path and is resolved by loader.
+- **Intercomponent communication** - a way of organizing data flow between different
+  components.
+- **Channel** - a pub/sub entity, that provides a name for scoped data
     emission and subscription based on event emitter.
-- **Event management** - a way of organizing children-to-parent data flow based
-  on native bubbling DOM events.
-- **Reflection** - a technique of metaprogramming. Enables instant data updates
-  of underlying DOM while changing component properties.
-- **Styles** - an object extending native CSSStyleDeclaration interface. Enables
-  component styling by abstracting CSS selectors and providing convenient
-  properties for style management.
+- **Reflection** - a technique of metaprogramming, which enables instant data updates
+  of underlying DOM, when component properties change.
+- **Model** - an object describing data state and its changes.
+- **State** - an object containing mutable data.
+- **Reactivity** - an ability of component to update its properties on data change.
+- **Reaction** - a pure function, which binds model state to automate component
+    reflection.
+- **Styles** - a schema property extending native CSSStyleDeclaration interface. Enables
+  component styling by abstracting CSS selectors.
+- **Routing** - a mechanism, which maps routes to corresponding schemas relying on url path.
+- **Route** - an object that configures how component is being routed basing on some pattern.
+- **Router** - a routing controller, which is responsible for route management and
+    navigation.
+- **SSR** (Server Side Rendering) - a mode used to run engine with Node.js and render HTML from
+schemas.
+- **Hash** - a hash string calculated from schema properties for self identifying.
+- **Hydration** - a process of DOM node binding restoration using schema hash.
+- **CLI** (Command Line Interface) - a JavaScript tool used to help developers create,
+  build and serve application.
 
 ### 2. Startup
 
-Application starts by serving static files from the app folder.<br>
+Swayer application is not trivial, because you don't have access neither to bare HTML, nor CSS.
+Instead, you should use pure JavaScript and you should **never use DOM directly as it will break your app.**
+It can be considered as a huge limitation, but it hides a lot of repetitive complexity, what reduces your
+work and improves overall development experience.
+
+Typical Swayer application has a defined file structure:
+
+- **main.js** - entry point of application
+- **env.js** - current environment file, which is being substituted during the build
+- **app** - application source files
+- **assets** - images, icons, fonts and other static staff
+- **node_modules** - installed npm packages
+- **environments** - environment configurations (optional)
+- **types** - static typing files for better dev experience (optional)
+- project configuration files like package.json, .eslint.json, tsconfig.json, etc.
+
+
+--- TODO continue ---
+
+
+starts by serving static files from the app folder.<br>
 Entry point: **index.html** - a single piece of html in the whole app.
 
 ```html
