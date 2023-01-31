@@ -16,6 +16,7 @@
   "include": [
     "index.js",
     "bin/**/*",
+    "cli/**/*",
     "examples/**/*",
     "lib/**/*",
     "test/**/*",

@@ -24,18 +24,20 @@ understanding!
 If you have a question, please check out our support groups and channels for
 developers community:
 
-Telegram:
+Join the community in Telegram:
 
-- Channel for Metarhia community: https://t.me/metarhia
-- Group for Metarhia technology stack community: https://t.me/metaserverless
-- Group for NodeUA community: https://t.me/nodeua
+- Channel for Swayer UA community: https://t.me/SwayerUA
+  - Linked Swayer UA chat: https://t.me/SwayerUAChat
+
+
+- Channel for Swayer EN community: https://t.me/SwayerEN
+  - Linked Swayer UA chat: https://t.me/SwayerENChat
 
 ## Pull Requests
 
-Before open pull request please follow checklist:
+Before open a pull request please follow checklist:
 
 - [ ] tests and linter show no problems (`npm t`)
 - [ ] tests are added/updated for bug fixes and new features
-- [ ] code is properly formatted (`npm run fmt`)
-- [ ] description of changes is added in CHANGELOG.md
-- [ ] update .d.ts typings
+- [ ] changes described in CHANGELOG.md
+- [ ] type declarations updated

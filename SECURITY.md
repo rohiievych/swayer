@@ -5,20 +5,14 @@
 | Version | Supported          |
 | ------- | ------------------ |
 | 0.x.x   | :x:                |
-| 1.x.x   | :x:                |
-| 2.0.x   | :x:                |
-| 2.1.x   | :x:                |
-| 2.2.x   | :x:                |
-| 2.3.x   | :x:                |
-| 2.4.x   | :x:                |
-| 2.5.x   | :x:                |
-| 2.6.x   | :white_check_mark: |
+| 1.x.x   | :white_check_mark: |
 
-## Reporting a Vulnerability
+## Report a vulnerability
 
 If you believe you have found a security vulnerability, let us know by sending
-email to [r.ogiyevich@gmail.com](mailto:r.ogiyevich@gmail.com)
-We will investigate that and do our best to quickly fix the problem.
+an email to [rohiievych@gmail.com](mailto:rohiievych@gmail.com).
+We will investigate it and fix the problem as soon as possible.
 
-Please don't open an issue to or discuss this security vulnerability in a public
-place. Thanks for understanding!
+**Please don't open an issue or discuss this security vulnerability in public.**
+
+Thanks for understanding!

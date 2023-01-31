@@ -20,9 +20,9 @@ If applicable, add screenshots to help explain your problem.
 
 **Desktop (please complete the following information):**
 
-- OS: [e.g. Fedora 30 64-bit]
-- Node.js version [e.g. 16.16.2]
-- Browser [e.g. Google Chrome 94]
+- OS: [e.g. Fedora 37 64-bit]
+- Node.js version [e.g. 18.11.0]
+- Browser [e.g. Google Chrome 109]
 - Swayer version [e.g. 1.0.0]
 
 **Additional context**
