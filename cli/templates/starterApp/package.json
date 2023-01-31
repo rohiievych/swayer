@@ -11,7 +11,7 @@
     "build:prod": "swr build --prod && swr render dist/main.js --output dist/index.html --ssr"
   },
   "dependencies": {
-    "swayer": "github:metarhia/swayer#feat/framework-enhancements"
+    "swayer": "github:rohiievych/swayer#history/alpha"
   },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^5.49.0",
