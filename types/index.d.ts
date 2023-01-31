@@ -3,7 +3,7 @@ type UserObject = Record<string, any>;
 
 interface SchemaRef {
   path: string;
-  input?: UserObject;
+  input?: UserObject | BasicPrimitives | NullishPrimitives;
 }
 
 interface Route<TModel extends Model> {
