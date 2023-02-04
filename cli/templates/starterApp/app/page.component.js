@@ -25,7 +25,7 @@ export default {
               styles: { display: 'block' },
               text: 'Read documentation',
               attrs: {
-                href: 'https://github.com/metarhia/swayer',
+                href: 'https://github.com/rohiievych/swayer',
                 target: '_blank',
               },
             },
@@ -34,7 +34,7 @@ export default {
               styles: { display: 'block' },
               text: 'Play with example',
               attrs: {
-                href: 'https://github.com/metarhia/swayer/tree/main/examples/todo-app',
+                href: 'https://github.com/rohiievych/swayer/tree/main/examples/todo-app',
                 target: '_blank',
               },
             },

@@ -5,6 +5,7 @@
     "strict": true,
     "baseUrl": ".",
     "useDefineForClassFields": true,
+    "moduleResolution": "NodeNext",
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "allowJs": true,

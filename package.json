@@ -2,7 +2,7 @@
   "name": "swayer",
   "version": "1.0.0-alpha.1",
   "description": "Schema based UI engine",
-  "author": "Roman Ohiievych <r.ogiyevich@gmail.com>",
+  "author": "Roman Ohiievych <rohiievych@gmail.com>",
   "license": "MIT",
   "keywords": [
     "app",
@@ -49,18 +49,14 @@
   "dependencies": {
     "jsdom": "^21.1.0",
     "pretty": "^2.0.0",
-    "terser": "^5.16.1"
+    "terser": "^5.16.3"
   },
   "devDependencies": {
     "@types/node": "^18.11.18",
-    "@typescript-eslint/eslint-plugin": "^5.49.0",
-    "@typescript-eslint/parser": "^5.49.0",
-    "eslint": "^8.32.0",
-    "eslint-config-metarhia": "^8.1.0",
-    "eslint-plugin-import": "^2.27.5",
-    "eslint-plugin-json": "^3.1.0",
-    "eslint-plugin-markdown": "^3.0.0",
-    "eslint-plugin-yml": "^1.4.0",
-    "typescript": "^4.9.4"
+    "@typescript-eslint/eslint-plugin": "^5.50.0",
+    "@typescript-eslint/parser": "^5.50.0",
+    "eslint": "^8.33.0",
+    "globals": "^13.20.0",
+    "typescript": "^4.9.5"
   }
 }
