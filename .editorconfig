@@ -8,6 +8,6 @@ insert_final_newline = true
 trim_trailing_whitespace = true
 max_line_length = 80
 
-[{*.js,*.mjs,*.ts,*.json,*.yml}]
+[{*.js,*.ts,*.json,*.yml}]
 indent_size = 2
 indent_style = space
