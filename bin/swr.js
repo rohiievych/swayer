@@ -11,6 +11,13 @@ const colors = {
   green: (str) => `\x1b[32m${str}\x1b[0m`,
 };
 
+const measure = async (fn) => {
+  const start = performance.now();
+  await fn();
+  const end = performance.now();
+  return `${(end - start).toFixed(2)}ms`;
+};
+
 /*
 * Define CLI commands with options and arguments
 * */
@@ -20,8 +27,9 @@ const renderOptions = {
     description: 'Pass component input data as JSON string.',
     parseAsJson: true,
   },
-  '--ssr': {
-    description: 'Enable server side rendering.',
+  '--mode': {
+    aliases: ['-m'],
+    description: 'Set rendering mode: csr or ssr. Defaults to csr.',
   },
 };
 
@@ -38,8 +46,10 @@ const commands = {
     ],
     execute: async ({ name }) => {
       console.log(colors.green('\nCreating new Swayer application...\n'));
-      await new Builder().createStarter(name);
-      console.log(colors.green('\nDone!'));
+      const ms = await measure(
+        () => new Builder().createStarter(name),
+      );
+      console.log(colors.green(`\nDone in ${ms}`));
     },
   },
   build: {
@@ -68,11 +78,43 @@ const commands = {
         'Defaults to current directory.',
       },
     ],
-    execute: async ({ ssr, ...buildOptions }) => {
+    execute: async ({ mode, ...buildOptions }) => {
       console.log(colors.green('\nBuilding Swayer application...\n'));
-      if (buildOptions.production) buildOptions.env = 'production';
-      await new Builder({ ssr }).build(buildOptions);
-      console.log(colors.green('\nDone!'));
+      const ms = await measure(
+        async () => {
+          if (buildOptions.production) buildOptions.env = 'production';
+          await new Builder({ mode }).build(buildOptions);
+        },
+      );
+      console.log(colors.green(`\nDone in ${ms}`));
+    },
+  },
+  spa: {
+    description: 'Create single page application.',
+    options: {
+      '--title': {
+        aliases: ['-t'],
+        description: 'SPA index page title.',
+      },
+      '--lang': {
+        aliases: ['-l'],
+        description: 'SPA index page language.',
+      },
+    },
+    arguments: [
+      {
+        name: 'path',
+        description: 'Path to application directory. ' +
+          'Defaults to current directory.',
+      },
+    ],
+    execute: async ({ ...spaOptions }) => {
+      const startMsg = '\nCreating Swayer single page application...\n';
+      console.log(colors.green(startMsg));
+      const ms = await measure(
+        () => new Builder().createSPAPage(spaOptions),
+      );
+      console.log(colors.green(`\nDone in ${ms}`));
     },
   },
   render: {
@@ -81,6 +123,7 @@ const commands = {
     options: {
       ...renderOptions,
       '--route': {
+        aliases: ['-r'],
         description: 'Path to be routed inside Swayer components. ' +
           `Defaults to '/'.`,
       },
@@ -91,6 +134,7 @@ const commands = {
         'but with .html extension.',
       },
       '--pretty': {
+        aliases: ['-p'],
         description: 'Prettify HTML output files.',
       },
     },
@@ -100,15 +144,17 @@ const commands = {
         description: 'Path to component schema file.',
       },
     ],
-    execute: async ({ ssr, ...renderOptions }) => {
+    execute: async ({ mode, ...renderOptions }) => {
       if (!renderOptions.path) {
         const msg = '\nError: path to component schema file is not provided!';
         console.log(colors.red(msg));
         return;
       }
       console.log(colors.green('\nRendering Swayer component...\n'));
-      await new Builder({ ssr }).render(renderOptions);
-      console.log(colors.green('\nDone!'));
+      const ms = await measure(
+        () => new Builder({ mode }).render(renderOptions),
+      );
+      console.log(colors.green(`\nDone in ${ms}`));
     },
   },
   serve: {
@@ -132,10 +178,10 @@ const commands = {
         'Defaults to current directory.',
       },
     ],
-    execute: ({ ssr, ...serverOptions }) => {
+    execute: ({ mode, ...serverOptions }) => {
       console.log(colors.green('\nWelcome to Swayer http server!'));
       console.log('\n-- DO NOT USE IN PRODUCTION --\n');
-      return new HttpServer({ ssr }).start(serverOptions);
+      return new HttpServer({ mode }).start(serverOptions);
     },
   },
 };
@@ -219,7 +265,7 @@ const isOption = (arg, i, args) => (
 );
 const isArgument = (arg, i, args) => (
   arg !== commandName
-  && !command.aliases.includes(arg)
+  && !command.aliases?.includes(arg)
   && !isOption(arg, i, args)
 );
 const getOptionName = (arg) => Object.keys(command.options).find(

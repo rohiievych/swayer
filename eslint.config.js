@@ -1,11 +1,16 @@
+import metarhia from 'eslint-config-metarhia';
 import ts from '@typescript-eslint/eslint-plugin';
 import tsParser from '@typescript-eslint/parser';
 import globals from 'globals';
+
+const metarhiaRules = metarhia.extends.slice(1)
+  .reduce((all, { rules }) => Object.assign(all, rules), {});
 
 export default [
   'eslint:recommended',
   {
     rules: {
+      ...metarhiaRules,
       'semi': 'error',
       'no-trailing-spaces': ['error', { skipBlankLines: true }],
       'no-unused-vars': [

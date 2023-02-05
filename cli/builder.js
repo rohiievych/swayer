@@ -19,6 +19,8 @@ const ensureDirAccess = async (dirPath) => {
   }
 };
 
+const SPA_INDEX = 'index.html';
+
 const OUTPUT_DIR = 'dist';
 
 const ENV_DIR = 'environments';
@@ -45,20 +47,18 @@ const TERSER_OPTIONS = {
 
 export default class Builder {
   #platform;
-  #platformOptions;
 
   constructor(platformOptions = {}) {
     this.#platform = new ServerPlatform(platformOptions);
-    this.#platformOptions = platformOptions;
   }
 
   async build(options) {
-    const { path = './', output, env } = options;
+    const { path = './', output, env, production: isProd } = options;
     const srcDir = resolve(path);
     const outputDir = output ? resolve(output) : resolve(path, OUTPUT_DIR);
     const buildFiles = BUILD_FILES.map((path) => join(srcDir, path));
     const filter = (src) => buildFiles.some((name) => src.startsWith(name));
-    await this.#copyDir(srcDir, outputDir, { filter });
+    await this.#copyDir(srcDir, outputDir, { filter, isProd });
     await this.#copyEnv(srcDir, outputDir, env);
     await this.#runCommand('npm ci --omit=dev', outputDir);
     await this.#cleanFilesFromDir(PACKAGE_FILES, outputDir);
@@ -70,6 +70,13 @@ export default class Builder {
     const fullOutputPath = resolve(outputPath);
     let content = await this.#platform.render(path, input, route);
     if (pretty) content = prettifyHTML(content);
+    await fsp.writeFile(fullOutputPath, content);
+  }
+
+  async createSPAPage(options) {
+    const { path = './', title, lang  } = options;
+    const fullOutputPath = resolve(path, SPA_INDEX);
+    const content = this.#platform.createSPA(title, lang);
     await fsp.writeFile(fullOutputPath, content);
   }
 
@@ -113,8 +120,7 @@ export default class Builder {
   }
 
   async #copyDir(srcDir, destDir, options = {}) {
-    const isProd = this.#platformOptions.production;
-    const { filter = () => true } = options;
+    const { filter = () => true, isProd = false } = options;
     await ensureDirAccess(destDir);
     for await (const srcFile of this.#iterateFiles(srcDir)) {
       if (filter(srcFile)) {

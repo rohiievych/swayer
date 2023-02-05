@@ -7,6 +7,7 @@ export default [
   {
     rules: {
       'semi': 'error',
+      'prefer-const': 'error',
       'no-trailing-spaces': ['error', { skipBlankLines: true }],
       'no-unused-vars': [
         'error',

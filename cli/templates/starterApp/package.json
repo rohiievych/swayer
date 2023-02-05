@@ -6,9 +6,8 @@
   "scripts": {
     "start": "swr serve",
     "start:ssr": "swr serve --ssr",
-    "build": "swr build && swr render dist/main.js --output dist/index.html --pretty",
-    "build:ssr": "swr build && swr render dist/main.js --output dist/index.html --pretty --ssr",
-    "build:prod": "swr build --prod && swr render dist/main.js --output dist/index.html --ssr"
+    "build": "swr build && swr spa dist",
+    "build:prod": "swr build --prod && swr spa dist"
   },
   "dependencies": {
     "swayer": "github:rohiievych/swayer#history/alpha"
