@@ -1,6 +1,6 @@
 {
   "name": "swayer-starter-app",
-  "version": "1.0.1",
+  "version": "1.0.0",
   "description": "Initial Swayer application",
   "type": "module",
   "scripts": {
