@@ -1,13 +1,15 @@
 // eslint-disable-next-line
 type UserObject = Record<string, any>;
 
+type MaybeArray<T> = T | T[];
+
 interface SchemaRef {
   path: string;
   input?: UserObject | BasicPrimitives | NullishPrimitives;
 }
 
 interface Route<TModel extends Model> {
-  pattern: string | string[];
+  pattern: MaybeArray<string>;
   component: RouteComponent<TModel>;
   canMatch?: (params: Record<string, string>) => boolean | Promise<boolean>;
 }
@@ -24,14 +26,12 @@ interface Model<State = UserObject> extends UserObject {
   state: State;
 }
 
-type RouteComponent<TModel extends Model> = SchemaValue<TModel>
-  | SchemaValue<TModel>[]
+type RouteComponent<TModel extends Model> = MaybeArray<SchemaValue<TModel>>
   | RouteComponentResolver<TModel>;
 
 type RouteComponentResolver<TModel extends Model> = (
   params: Record<string, string>,
-) => SchemaValue<TModel>
-  | SchemaValue<TModel>[]
+) => MaybeArray<SchemaValue<TModel>>
   | Promise<SchemaValue<TModel>>;
 
 type BasicPrimitives = string | boolean | number | bigint | symbol;
@@ -47,7 +47,7 @@ type SchemaValue<TModel extends Model> = Schema<TModel>
   | NullishPrimitives;
 
 type SchemaChild<TModel extends Model> = SchemaValue<TModel>
-  | Reaction<TModel['state'], SchemaValue<TModel> | SchemaValue<TModel>[]>;
+  | Reaction<TModel['state'], MaybeArray<SchemaValue<TModel>>>;
 
 type SchemaProps = HTMLInputElement;
 
@@ -56,9 +56,10 @@ type Props<State> = Partial<{
 }>;
 
 interface Schema<TModel extends Model, State = TModel['state']> {
-  tag?: string;
+  tag?: keyof HTMLElementTagNameMap;
   namespaces?: Record<string, string>,
   text?: BasicPrimitives | Reaction<State, BasicPrimitives>;
+  classes?: MaybeArray<string> | Reaction<State, MaybeArray<string>>;
   styles?: Styles<State> | Reaction<State, CSSPropsValue>;
   props?: Props<State>;
   attrs?: Attrs<State> | Reaction<State, Attrs<State>>;
@@ -71,7 +72,7 @@ interface Schema<TModel extends Model, State = TModel['state']> {
 }
 
 interface ChannelOptions<TModel extends Model> {
-  scope?: string | string[];
+  scope?: MaybeArray<string>;
   select?: (
     component: Component<TModel>,
     index: number,
@@ -157,5 +158,5 @@ interface CssAnimation {
 
 interface Styles<State> extends PseudoStyles {
   animations?: CssAnimation[];
-  compute?: Reaction<State, CSSPropsValue> | Reaction<State, CSSPropsValue>[];
+  compute?: MaybeArray<Reaction<State, CSSPropsValue>>;
 }
