@@ -82,8 +82,6 @@ interface ChannelOptions<TModel extends Model> {
 
 interface Component<TModel extends Model>
           extends Omit<Required<Schema<TModel>>, 'children'> {
-  isServer: boolean;
-  isBrowser: boolean;
   moduleUrl: string;
   router: Router;
   emitEvent(name: string, data?): boolean;
