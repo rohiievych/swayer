@@ -2,7 +2,7 @@
   "name": "swayer",
   "version": "1.0.0-alpha.1",
   "description": "Schema based UI engine",
-  "author": "Roman Ohiievych <rohiievych@gmail.com>",
+  "author": "Roman Ohiievych <roman@swayer.dev>",
   "license": "MIT",
   "keywords": [
     "app",
@@ -24,7 +24,7 @@
   },
   "bugs": {
     "url": "https://github.com/metarhia/swayer/issues",
-    "email": "rohiievych@gmail.com"
+    "email": "roman@swayer.dev"
   },
   "homepage": "https://metarhia.com",
   "funding": {

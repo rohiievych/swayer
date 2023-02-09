@@ -9,7 +9,7 @@ const bodyStyles = {
   fontWeight: '300',
 };
 
-/** @returns {[SchemaRef, Schema]} */
+/** @returns {[ComponentRef, Schema]} */
 const createPage = (title, contentComponent) => [
   {
     path: '@site/head.component',

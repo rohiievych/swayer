@@ -19,15 +19,9 @@ Find your way to help ukrainians defend the world of freedom and democracy:
 
 **Why is this so important?**
 
-My home country has been ruined by terrible war started by Russian Federation.
-Thousands of people lost their lives and homes. Millions are affected by acts of terrorism,
-which occur on daily basis. They say they came to protect someone, but instead cruelly kill
-children and elderly people, erase whole cities from the face of the earth, because they simply don't
-want Ukraine to exist. This is insane to have such reality in the 21st century,
-so we must stop the global evil from expanding. Arm Ukraine - give this world a chance!
+My home country has been ruined by terrible war started by Russian Federation. Thousands of people lost their lives and homes. Millions are affected by acts of terrorism, which occur on daily basis. They say they came to protect someone, but instead cruelly kill children and elderly people, erase whole cities from the face of the earth, because they simply don't want Ukraine to exist. This is insane to have such reality in the 21st century, so we must stop the global evil from expanding. Arm Ukraine - give this world a chance!
 
-**This technological product is prohibited for use
-by citizens of #RussiaIsATerroristState.**
+**This technological product is prohibited for use by citizens of #RussiaIsATerroristState.**
 
 ## Quick start
 
@@ -37,11 +31,10 @@ Install Swayer CLI
 npm i -g swayer
 ```
 
-Create starter project
+Create starter project with Swayer CLI
 
 ```shell
-swr create mySwayerProject
-cd mySwayerProject
+swr create mySwayerProject && cd mySwayerProject
 ```
 
 Start application
@@ -57,47 +50,43 @@ npm start
 - Play with [example](https://github.com/metarhia/swayer/tree/main/examples/todo-app) code to
   investigate how it works
 
+## Contacts
+
+Telegram:
+
+- Swayer UA community:
+  - channel: [SwayerUA](https://t.me/SwayerUA)
+  - chat: [SwayerUAChat](https://t.me/SwayerUAChat)
+
+
+- Swayer EN community:
+  - channel: [SwayerEN](https://t.me/SwayerEN)
+  - chat: [SwayerENChat](https://t.me/SwayerENChat)
+
+E-mail: [roman@swayer.dev](mailto:roman@swayer.dev)
+
 ## Description
 
-Swayer is a powerful user interface engine, which enables **JavaScript to describe document
-structure, styling and behavior**. This instrument is provided for creating rich
-web applications using lots of JavaScript mechanisms out-of-the-box. **You can build
-a wide range of application types from simple static site, which can be rendered even
-from JSON data, to stateful single page applications with complex business logic.**
+Swayer is a comprehensive user interface engine, which enables pure **JavaScript to describe document structure, styling and behavior with no need to write HTML and CSS code**. This instrument is provided for creating rich web applications using the power of JavaScript with all its capabilities out-of-the-box. You can build a wide range of application types from simple static site, which can be rendered even from JSON data, to stateful single page applications with complex business logic.
 
 #### UI Engine vs UI Framework vs UI Library
 
-The difference between these types of software is a responsibility scope. You import
-a library to help you with something, e.g. rendering, while a framework provides a generic
-structure reducing amount of trivial work. UI engine is designed to encapsulate a powerful
-logic, which performs a task. In case of Swayer, **it consumes component schemas and outputs
-dynamic JavaScript application hiding lots of complexities under the hood.**
+The difference between these types of software is a responsibility scope. You import a library to help you with something, e.g. rendering, while a framework provides a generic structure reducing amount of trivial work. UI engine is designed to encapsulate a powerful logic, which performs a task. In case of Swayer, **it consumes component schemas and outputs dynamic JavaScript application hiding lots of complexities under the hood.**
 
 #### Why not to stick with hybrid syntax like JSX?
 
-The answer is simple - you still play with HTML syntax, which has to be parsed before it can
-be processed with JavaScript. That's a quite big overhead. While HTML syntax is really
-well known - it was created for describing static web documents, not interactive apps.
-In any case we have to create abstractions to make web page dynamic, so we use plain
-objects with the full power of JavaScript to create DOM tree in the fastest way.
+The answer is simple - you still play with HTML syntax, which has to be parsed before it can be processed with JavaScript. That's a quite big overhead. While HTML syntax is really well known - it was created for describing static web documents, not interactive apps. In any case we have to create abstractions to make web page dynamic, so we use plain objects with the full power of JavaScript to create DOM tree in the fastest way.
 
 #### Why not to stick with CSS preprocessors like Stylus or Sass?
 
-You simply don't need to use different CSS-like syntax with Swayer. JavaScript
-is more powerful and standardized language than any style preprocessor.
-Moreover, Swayer provides extended standard style declaration for convenience
-and brings selector abstraction, so you can just share or toggle styles as a
-simple JavaScript object. Swayer will distribute all your CSS rules across the app
-avoiding duplication and providing encapsulation.
+You simply don't need to use different CSS-like syntax with Swayer. JavaScript is more powerful and standardized language than any style preprocessor. Moreover, Swayer provides extended standard style declaration for convenience and brings selector abstraction, so you can just share or toggle styles as a simple JavaScript object. Swayer will distribute all your CSS rules across the app avoiding duplication and providing encapsulation.
 
-**Important: do not assume HTML or CSS to be legacy languages!**<br>
-Swayer compiles component schemas down to the pure HTML/CSS on server side or
-directly to DOM/CSSOM in browsers while **making it consistent with your JavaScript logic**.
+**Important: do not assume HTML or CSS to be legacy languages!**<br> Swayer compiles component schemas down to the pure HTML/CSS on server side or directly to DOM/CSSOM in browsers while **making it consistent with your JavaScript logic**.
 
 ## Features:
 
 - #### General
-  - Tiny runtime ~17kb minified and gzipped
+  - Tiny runtime
   - Pure modern JavaScript everywhere
   - Focus on performance and fast development
   - MVVM design pattern
@@ -141,8 +130,6 @@ directly to DOM/CSSOM in browsers while **making it consistent with your JavaScr
 
 Simple head component:
 
-<!-- eslint-skip -->
-
 ```js
 // Schema factory returning a component schema
 // title is passed as input from other schemas
@@ -182,8 +169,6 @@ export default (title) => ({
 ```
 
 Advanced component with model and reactive state:
-
-<!-- eslint-skip -->
 
 ```js
 // Use ES6 modules
@@ -230,8 +215,6 @@ export default () => {
   };
 };
 ```
-
-<!-- eslint-skip -->
 
 ```js
 import Storage from '../../utils/storage.js';
@@ -307,262 +290,271 @@ export class TodosModel {
 
 ### 1. Terminology
 
-- **Developer** - you.
+- **CLI** (Command Line Interface) - a JavaScript tool used to help developers create, build, render and serve components.
+- **CSR** (Client Side Rendering) - a rendering mode used to run engine in web browser and render dynamic application from schemas.
+- **Channel** - a pub/sub entity, that provides a name for scoped data emission and subscription based on event emitter.
+- **Component** - a schema, which is exported by default from module and groups other related schemas.
+- **Context API** - a set of properties and methods provided by engine to help developer use its features.
+- **Context** - an instance of schema created by engine during the rendering.
+- **Element** - a schema describing a DOM element.
 - **Engine** - Swayer UI engine.
 - **Environment** - a module defining variables for app configuration.
-- **Event** - an object, which flows from children to parents using native bubbling
-  DOM events.
-- **Schema** - an object describing HTML element properties and structure.
-  Acts as an HTML template, but written in JavaScript with all its capabilities.
-- **Schema reference** - an object describing path and input for lazy loaded schema.
-- **Schema value** - a value, which can be a regular schema, schema reference or any
-    primitive value including nullish ones.
-- **Schema child** - schema value, array of schema values or reaction.
-- **Component** - an object instantiated by the engine using schema. Acts as
-    a context provided in schema methods, events, channels and lifecycle hooks.
-- **Component children** - an array of schema values or reactions describing component structure.
-- **Component API** - a set of properties and methods provided by engine to
-    help developer use its features.
-- **Hook** - a component lifecycle handler.
-- **Namespace** - a name, which encapsulates a part of path and is resolved by loader.
-- **Intercomponent communication** - a way of organizing data flow between different
-  components.
-- **Channel** - a pub/sub entity, that provides a name for scoped data
-    emission and subscription based on event emitter.
-- **Reflection** - a technique of metaprogramming, which enables instant data updates
-  of underlying DOM, when component properties change.
-- **Model** - an object describing data state and its changes.
-- **State** - an object containing mutable data.
-- **Reactivity** - an ability of component to update its properties on data change.
-- **Reaction** - a pure function, which binds model state to automate component
-    reflection.
-- **Styles** - a schema property extending native CSSStyleDeclaration interface. Enables
-  component styling by abstracting CSS selectors.
-- **Routing** - a mechanism, which maps routes to corresponding schemas relying on url path.
-- **Route** - an object that configures how component is being routed basing on some pattern.
-- **Router** - a routing controller, which is responsible for route management and
-    navigation.
-- **SSR** (Server Side Rendering) - a mode used to run engine with Node.js and render HTML from
-schemas.
+- **Event** - an object, which flows from children to parents using native bubbling DOM events.
 - **Hash** - a hash string calculated from schema properties for self identifying.
+- **Hook** - an element lifecycle handler.
 - **Hydration** - a process of DOM node binding restoration using schema hash.
-- **CLI** (Command Line Interface) - a JavaScript tool used to help developers create,
-  build and serve application.
+- **Intercomponent communication** - a way of organizing data flow between different elements or components.
+- **Model** - an object describing reactive data state and its changes.
+- **Module** - an EcmaScript native module (ES6 module)
+- **Namespace** - a name, which encapsulates a part of path and is resolved by loader.
+- **Reaction** - a pure function, which binds model state to automate component reflection.
+- **Reactivity** - an ability of an object to update its properties on data change.
+- **Reflection** - a technique of metaprogramming, which enables instant data updates of underlying DOM, when schema properties change.
+- **Route** - an object that configures how component is being routed basing on some pattern.
+- **Router** - a routing controller, which is responsible for route management and navigation.
+- **Routing** - a mechanism, which maps routes to corresponding schemas relying on url path.
+- **SPA** (Single Page Application) - a rendering mode used to run engine in browser using a single predefined HTML page.
+- **SSR** (Server Side Rendering) - a rendering mode used to run engine with Node.js and render HTML from schemas.
+- **Schema child** - schema value, array of schema values or reaction.
+- **Schema children** - an array of schema values or reactions describing underlying structure.
+- **Component reference** - an object describing path and input for lazy loaded component.
+- **Schema value** - a value, which can be a regular schema, component reference or any primitive value including nullish ones.
+- **Schema** - an object describing element properties, structure and behavior.
+- **State** - an object containing mutable reactive data.
+- **Styles** - a schema property extending native CSSStyleDeclaration interface. Enables styling by abstracting CSS selectors.
 
-### 2. Startup
+### 2. Introduction
 
-Swayer application is not trivial, because you don't have access neither to bare HTML, nor CSS.
-Instead, you should use pure JavaScript and you should **never use DOM directly as it will break your app.**
-It can be considered as a huge limitation, but it hides a lot of repetitive complexity, what reduces your
-work and improves overall development experience.
+Swayer application is not trivial, because you don't have access neither to bare HTML, nor CSS. Instead, you should use pure JavaScript and you should never use DOM directly as it will break your app. It can be considered as a huge limitation, but it hides a lot of repetitive complexity, what reduces your work and improves overall development experience.
 
 Typical Swayer application has a defined file structure:
 
-- **main.js** - entry point of application
+- **main.js** - entry point of application, exports the root schema
 - **env.js** - current environment file, which is being substituted during the build
 - **app** - application source files
 - **assets** - images, icons, fonts and other static staff
+- **dist** - application build default directory (created by `swr build`)
 - **node_modules** - installed npm packages
 - **environments** - environment configurations (optional)
 - **types** - static typing files for better dev experience (optional)
 - project configuration files like package.json, .eslint.json, tsconfig.json, etc.
 
+The minimal valid app must have a root schema in main.js. Consider this example:
 
---- TODO continue ---
-
-
-starts by serving static files from the app folder.<br>
-Entry point: **index.html** - a single piece of html in the whole app.
-
-```html
-<!DOCTYPE html>
-<script async type="module" src="./app/main.js"></script>
-```
-
-Bootstrap point: **app/main.js**<br>
-Import bootstrap function from Swayer package and pass a schema or schema reference
-object:
-
-<!-- eslint-skip -->
 ```js
-bootstrap({
-  path: './pages/index.component',
-  base: import.meta.url,
-});
+// exported root schema
+export default {
+  children: [
+    // html element is the only one child possible in root schema
+    {
+      tag: 'html',
+      attrs: { lang: 'en' },
+      // html always consists of two mandatory children: head and body
+      children: [
+        {
+          tag: 'head',
+          children: [
+            // title is also mandatory for valid web pages
+            { tag: 'title', text: 'Page title' },
+          ],
+        },
+        // app content is always placed in the body
+        { tag: 'body', text: 'Simple text content' },
+      ],
+    },
+  ],
+}
 ```
 
-Important: you have to bootstrap with **html component** to be able to manage
-components like title or meta.
+The initial project with basic structure can be created with
+`swr create mySwayerProject`, so that developer can concentrate on the application.
+
+Then there are several options to run a Swayer application:
+
+1. Use embedded http server with `swr serve` or `swr serve --mode=ssr` to run engine in SSR mode.
+2. Build SPA app with `swr build && swr spa` and serve index.html as a single page with any web server like Nginx.
+3. To build multipage app use `swr build`, then render an HTML page for each route with `swr render main.js --output myPage.html --route /` and serve these pages with any web server.
+4. More advanced option is to leverage engine server platform to render schemas in Node.js:
+
+```js
+// path to root schema module
+const entryPath = 'main.js';
+// optional input data for root schema
+const input = { data: 'Any data' };
+// optional path which is used for component routing
+const routingPath = '/';
+const platform = new ServerPlatform(options);
+const content = await platform.render(entryPath, input, routingPath);
+
+// For more details see implementation: ./cli/httpServer.js
+```
 
 ### 3. Swayer component system
 
-Basically all schemas in Swayer are converted into components during
-runtime. These components represent **N-ary tree data structure** and are
-traversed with
-**Depth first preorder tree traversal algorithm**. With some performance
-optimizations this approach delivers **fast asynchronous rendering** for best
-user experience.
-<br><br>
-As the application grows it becomes hard to manage all component schemas in a
-single file. To address this issue Swayer uses **ES6 standard modules** to separate
-application parts and load them on demand.
+Basically, schema is a template from which engine instantiates contexts representing *N-ary tree data structure* and are traversed with *Depth first preorder tree traversal algorithm*. With some performance optimizations this approach delivers fast asynchronous rendering for best user experience. The size of a component can vary from single `p` or `span` element or even a piece of text to the whole application, which is represented by the root schema.
 
-- **Schema reference** is used to lazily load schema and pass input arguments.
-  <br><br>
+Typical element can be described with such schema:
 
-  - Schema reference declaration syntax:
-    <!-- eslint-skip -->
-    ```ts
-    interface SchemaRef {
-      path: string; // absolute or relative path to module
-      base?: string; // module url, usually import.meta.url, mandatory only if relative path is used
-      args?: Record<string, unknown>; // optional arguments for component factory
-    }
-    ```
-  - Schema reference usage examples:
-    <!-- eslint-skip -->
-    ```js
+```js
+const para = {
+  tag: 'p',
+  text: 'This is a paragraph',
+}
+```
+
+But when default export is present, it becomes a component:
+
+```js
+export default {
+  tag: 'p',
+  text: 'This is a text component',
+};
+```
+
+`export default` is mandatory for creating components. Bare `export` won't work as the engine relies on default export.
+
+As the application grows it becomes hard to manage all schemas in a single file. To address this issue Swayer uses **ES6 standard modules** to separate components and load them on demand. It's possible to lazily load such components with component reference:
+
+```js
+{
+  path: 'path/to/component',
+  input: { data: 'actually any optional data' },
+}
+```
+
+By default, path is absolute and starts from site root. Relative paths are not available, because engine loader cannot know about component's base url. However, this path can be namespaced.
+
+Schemas can have not only the document structure, but also extensible features. One of them is **namespaces**, which is used for module path mapping. Conventionally namespaced paths start from `@` symbol and map to path from site root. Consider the following example:
+
+```js
+{
+  namespaces: {
+    '@foo': 'app/path/to/foo/folder',
+    '@bar': 'app/path/to/bar/folder',
+  },
+}
+```
+
+By declaring namespaces developer gives an information about where engine can find modules to perform dynamic import under the hood or to send a message to distant component. Namespaces are scoped to the component it belongs to and all child components.
+
+Consider a `app/features/text` folder with file containing a text component - `text.component.js`:
+
+```js
+export default {
+  tag: 'p',
+  text: 'This is a text component',
+};
+```
+
+Now we can create namespace and reference the text component:
+
+```js
+{
+  tag: 'div',
+  namespaces: {
+    '@text': 'app/features/text',
+  },
+  children: [
+    { path: '@text/text.component' }
+  ],
+}
+```
+
+All modules are js files, so the extension can be skipped when using component reference.
+
+Components can consume input if exported as a function, which is called **schema factory**. Consider the example, where title is passed to schema factory like an argument:
+
+```js
+{
+  path: '@path/to/title.component',
+  input: { title: 'My awesome title' },
+}
+```
+
+```js
+export default ({ title }) => ({
+  tag: 'h1',
+  text: title,
+});
+```
+
+Factories allow developers to make their schemas fully dynamic parameterizing everything inside.
+
+Unlike HTML-like template, schema is written in pure JavaScript, so we can use its capabilities to make it really powerful. But first, let's go through the basic syntax of the schema:
+
+- **Tag** is obviously a name of HTML element tag. Consider the simplest element schema.
+```js
+{
+  tag: 'div';
+}
+```
+The piece of code above represents `<div></div>` HTML element.
+
+- **Text** property corresponds to element's text node:
+
+```js
+{
+  tag: 'button',
+  text: 'Click me',
+}
+```
+
+Such schema is rendered to `<button>Click me</button>`.
+
+- **Children** include schemas, that belong to particular parent schema. Such approach is dictated by the tree-like nature of any web document. This array can hold any primitive values, schemas, component references or reactions:
+
+```js
+{
+  tag: 'div'
+  children: [
+    // simple element schema
+    { tag: 'span', text: 'Hello' },
+    // a bare text node
+    ' ',
+    // simple element schema
+    { tag: 'span', text: 'world' },
+  ],
+}
+```
+
+```js
+{
+  tag: 'div'
+  children: [
+    // component reference
+    { path: '@path/to/some.component' },
+    // component reference with input data
     {
-      path: '/app/features/header/header.component',
-    }
-    ```
-    <!-- eslint-skip -->
-    ```js
-    {
-      path: './header/header.component.js', // skipping .js extension is available
-      base: import.meta.url,
-      args: { title: 'Header title' },
-    }
-    ```
-    <!-- eslint-skip -->
-    ```js
-    {
-      path: '/app/features/header/header.component',
-      args: 'Header title',
-    }
-    ```
-    <br>
+      path: '@path/to/title.component',
+      input: { title: 'A simple title' },
+    },
+  ],
+}
+```
 
-- **Schema factory** is used to construct lazily loaded schemas with input
-  arguments. It should be declared in a module as a default export. Then it will be
-  available for sharing with other components.
-  <br><br>
+```js
+{
+  tag: 'div'
+  // children state reaction
+  children: (state) => state.items.map((item) => ({
+    tag: 'p',
+    text: item.text,
+  })),
+}
+```
 
-  - Schema factory declaration syntax:
-    <!-- eslint-skip -->
-    ```js
-    export default (args: any) => Schema;
-    ```
-  - Schema factory usage examples:
-    ```js
-    export default () => ({
-      tag: 'h1',
-      text: 'Here is my own title',
-    });
-    ```
-    ```js
-    export default ({ title }) => ({
-      tag: 'h1',
-      text: title,
-    });
-    ```
-    <br>
+```js
+{
+  tag: 'div'
+  children: [
+    // child state reaction
+    (state) => ({ tag: 'p', text: state.text }),
+  ],
+}
+```
 
-- **Tag** is an HTML element name - the simplest possible schema.
-  <br><br>
+// todo continue
 
-  - Tag declaration syntax:
-    <!-- eslint-skip -->
-    ```js
-    tag: string; // any HTML element name
-    ```
-  - Tag usage example:
-    <!-- eslint-skip -->
-    ```js
-    {
-      tag: 'div';
-    }
-    ```
-    <br>
-
-- **Meta** is a configuration object for the component being created. You can
-  use `import.meta`
-  standard metadata object to pass some instructions to Swayer component. There
-  is a **module url** declared inside module metadata by default. At the moment
-  it is only used by channels feature, but it can be extended with other options
-  in the future.
-  <br><br>
-
-  - Meta declaration syntax:
-    <!-- eslint-skip -->
-    ```js
-    meta: ComponentMeta; // see types/index.d.ts for type info
-    ```
-  - Meta usage example:
-    <!-- eslint-skip -->
-    ```js
-    {
-      tag: 'div',
-      meta: import.meta,
-    }
-    ```
-    <br>
-
-- **Text** property corresponds to element's text node.
-  <br><br>
-
-  - Text declaration syntax:
-    <!-- eslint-skip -->
-    ```ts
-    text: string;
-    ```
-  - Text usage example:
-    <!-- eslint-skip -->
-    ```js
-    {
-      tag: 'button',
-      text: 'Click me',
-    }
-    ```
-    <br>
-
-- **Children** include schemas, that belong to particular parent schema. Such
-  approach is dictated by the tree-like nature of any web document. This
-  extended array can hold **schema**, which is declared inside the same module,
-  or **schema reference** containing the path to the module with schema.
-  <br><br>
-
-  - Children declaration syntax:
-    <!-- eslint-skip -->
-    ```js
-    children: ComponentChildren<Schema>;
-    ```
-  - Children usage examples:
-    <!-- eslint-skip -->
-    ```js
-    {
-      tag: 'div'
-      children: [
-        { tag: 'span', text: 'Hello ' },
-        { tag: 'span', text: 'world' },
-      ],
-    }
-    ```
-    <!-- eslint-skip -->
-    ```js
-    {
-      tag: 'div'
-      children: [
-        { path: '/absolute/path/to/hello.component' },
-        {
-          path: './relative/path/to/world.component',
-          base: import.meta.url,
-          args: { title: 'A simple title' },
-        },
-      ],
-    }
-    ```
-    <br>
 
 - **Attrs** object corresponds to a set of element's attributes.
   <br><br>

@@ -1,6 +1,6 @@
 import formService from './form-service.js';
 
-/** @returns {SchemaRef} */
+/** @returns {ComponentRef} */
 const createField = ([name, value]) => ({
   path: `@form/components/${value.type}.js`,
   input: [name, value],

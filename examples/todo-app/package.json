@@ -2,7 +2,7 @@
   "name": "todo-app",
   "version": "1.0.0",
   "description": "todo-app example from https://todomvc.com/",
-  "author": "Roman Ohiievych <rohiievych@gmail.com>",
+  "author": "Roman Ohiievych <roman@swayer.dev>",
   "license": "MIT",
   "type": "module",
   "repository": {

@@ -10,7 +10,7 @@
 ## Report a vulnerability
 
 If you believe you have found a security vulnerability, let us know by sending
-an email to [rohiievych@gmail.com](mailto:rohiievych@gmail.com).
+an email to [roman@swayer.dev](mailto:roman@swayer.dev).
 We will investigate it and fix the problem as soon as possible.
 
 **Please don't open an issue or discuss this security vulnerability in public.**

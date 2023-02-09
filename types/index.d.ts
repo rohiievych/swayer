@@ -3,7 +3,7 @@ type UserObject = Record<string, any>;
 
 type MaybeArray<T> = T | T[];
 
-interface SchemaRef {
+interface ComponentRef {
   path: string;
   input?: UserObject | BasicPrimitives | NullishPrimitives;
 }
@@ -41,7 +41,7 @@ type NullishPrimitives = null | undefined;
 type Reaction<State, Result> = (state: State) => Result;
 
 type SchemaValue<TModel extends Model> = Schema<TModel>
-  | SchemaRef
+  | ComponentRef
   | Routes<TModel>
   | BasicPrimitives
   | NullishPrimitives;
