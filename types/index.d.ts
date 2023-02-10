@@ -64,7 +64,6 @@ interface Schema<TModel extends Model, State = TModel['state']> {
   props?: Props<State>;
   attrs?: Attrs<State> | Reaction<State, Attrs<State>>;
   model?: TModel;
-  methods?: Methods & ThisType<Component<TModel>>;
   events?: Events & ThisType<Component<TModel>>;
   channels?: Channels & ThisType<Component<TModel>>;
   hooks?: Partial<Hooks> & ThisType<Component<TModel>>;
@@ -106,10 +105,6 @@ type AttrValue<State> = BasicPrimitives | NullishPrimitives | CSSProps<State>;
 interface Attrs<State> {
   style?: CSSProps<State> | Reaction<State, CSSProps<State>>;
   [attr: string]: AttrValue<State> | Reaction<State, AttrValue<State>>;
-}
-
-interface Methods {
-  [method: string]: (...args) => void;
 }
 
 interface Events {
