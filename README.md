@@ -3,7 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/swayer)](https://www.npmjs.com/package/swayer)
 [![npm downloads/month](https://img.shields.io/npm/dm/swayer.svg)](https://www.npmjs.com/package/swayer)
 [![npm downloads](https://img.shields.io/npm/dt/swayer.svg)](https://www.npmjs.com/package/swayer)
-[![snyk](https://snyk.io/test/github/metarhia/swayer/badge.svg)](https://snyk.io/test/github/metarhia/swayer)
+[![snyk](https://snyk.io/test/github/rohiievych/swayer/badge.svg)](https://snyk.io/test/github/rohiievych/swayer)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/metarhia/swayer/blob/main/LICENSE)
 
 **Comprehensive UI engine** for fast and low overhead JavaScript development
@@ -288,6 +288,36 @@ export class TodosModel {
 
 ## Swayer documentation
 
+### Table of contents
+
+1. [Terminology](#1-terminology)
+2. [Introduction](#2-introduction)
+3. [Swayer component system](#3-swayer-component-system)
+4. [The schema concept](#4-the-schema-concept)
+   - [Tag](#tag)
+   - [Text](#text)
+   - [Children](#children)
+   - [Attrs](#attrs)
+   - [Props](#props)
+   - [Classes](#classes)
+   - [Events](#events)
+   - [Channels](#channels)
+   - [Hooks](#hooks)
+5. [Schema Context API](#5-schema-context-api)
+6. [Reactivity](#6-reactivity)
+   - [Model](#model)
+   - [How Swayer reactivity reduces your work](#how-swayer-reactivity-reduces-your-work)
+7. [Styling](#7-styling)
+   - [Simple styles](#simple-styles)
+   - [Pseudo classes and elements](#pseudo-classes-and-elements)
+   - [Functional pseudo-classes](#functional-pseudo-classes)
+   - [Animations](#animations)
+   - [Computed styles](#computed-styles)
+   - [Inline styles](#inline-styles)
+8. [Routing](#8-routing)
+   - [Route types example](#route-types-example)
+   - [Router](#router)
+
 ### 1. Terminology
 
 - **CLI** (Command Line Interface) - a JavaScript tool used to help developers create, build, render and serve components.
@@ -386,7 +416,7 @@ const routingPath = '/';
 const platform = new ServerPlatform(options);
 const content = await platform.render(entryPath, input, routingPath);
 
-// For more details see implementation: ./cli/httpServer.js
+// for more details see implementation: ./cli/httpServer.js
 ```
 
 ### 3. Swayer component system
@@ -480,17 +510,26 @@ export default ({ title }) => ({
 
 Factories allow developers to make their schemas fully dynamic parameterizing everything inside.
 
-Unlike HTML-like template, schema is written in pure JavaScript, so we can use its capabilities to make it really powerful. But first, let's go through the basic syntax of the schema:
+### 4. The schema concept
 
-- **Tag** is obviously a name of HTML element tag. Consider the simplest element schema.
+Unlike HTML-like template, schema is written in pure JavaScript, so we can use programming capabilities to make it really powerful. Schemas can have different types depending on its usage and can represent not only elements, but also bare text and some configurations like namespaces or routes. But first, let's go through the basic syntax of the **element schema**:
+
+#### Tag
+
+Tag is obviously a name of HTML element tag. Used by engine to create a corresponding DOM element. Consider the simplest element schema:
+
 ```js
 {
   tag: 'div';
 }
 ```
-The piece of code above represents `<div></div>` HTML element.
+The piece of code above is rendered to `<div></div>` HTML element.
 
-- **Text** property corresponds to element's text node:
+#### Text
+
+Text property corresponds to the element's text node. Any primitive value is valid as well as a reaction.
+
+The following schema is rendered to `<button>Click me</button>`:
 
 ```js
 {
@@ -499,18 +538,28 @@ The piece of code above represents `<div></div>` HTML element.
 }
 ```
 
-Such schema is rendered to `<button>Click me</button>`.
-
-- **Children** include schemas, that belong to particular parent schema. Such approach is dictated by the tree-like nature of any web document. This array can hold any primitive values, schemas, component references or reactions:
+Button text is automatically updated, when the `state.text` is changed:
 
 ```js
 {
-  tag: 'div'
+  tag: 'button',
+  // reaction
+  text: (state) => state.text,
+}
+```
+
+#### Children
+
+Children include schemas, that belong to particular parent schema. Such approach is dictated by the tree-like nature of any web document. This array can hold any primitive values, schemas, component references or reactions:
+
+```js
+{
+  tag: 'div',
   children: [
     // simple element schema
     { tag: 'span', text: 'Hello' },
     // a bare text node
-    ' ',
+    ' - ',
     // simple element schema
     { tag: 'span', text: 'world' },
   ],
@@ -519,7 +568,7 @@ Such schema is rendered to `<button>Click me</button>`.
 
 ```js
 {
-  tag: 'div'
+  tag: 'div',
   children: [
     // component reference
     { path: '@path/to/some.component' },
@@ -534,7 +583,7 @@ Such schema is rendered to `<button>Click me</button>`.
 
 ```js
 {
-  tag: 'div'
+  tag: 'div',
   // children state reaction
   children: (state) => state.items.map((item) => ({
     tag: 'p',
@@ -545,7 +594,7 @@ Such schema is rendered to `<button>Click me</button>`.
 
 ```js
 {
-  tag: 'div'
+  tag: 'div',
   children: [
     // child state reaction
     (state) => ({ tag: 'p', text: state.text }),
@@ -553,482 +602,722 @@ Such schema is rendered to `<button>Click me</button>`.
 }
 ```
 
-// todo continue
+#### Attrs
 
+Attributes object corresponds to a set of element's attributes:
 
-- **Attrs** object corresponds to a set of element's attributes.
-  <br><br>
-  - Attrs declaration syntax:
-    <!-- eslint-skip -->
-    ```ts
-    interface Attrs {
-      // key-value attribute, see types/index.d.ts for more type info
-      attrName: string;
+```js
+{
+  tag: 'input',
+  attrs: {
+    name: 'age',
+    type: 'text',
+  },
+}
+```
+
+Such element is rendered to `<input name="age" type="text">`.
+
+Reactions are also applicable to each attribute or the whole object:
+
+```js
+{
+  tag: 'input',
+  attrs: {
+    // attribute reaction
+    name: (state) => state.name,
+    type: 'text',
+  },
+}
+```
+
+```js
+{
+  tag: 'input',
+  // all attributes reaction
+  attrs: (state) => ({
+    name: state.name,
+    type: state.type,
+  }),
+}
+```
+
+#### Props
+
+Properties object corresponds to a set of element's properties. In the following example the value property is set to the input:
+
+```js
+{
+  tag: 'input',
+  props: {
+    value: 'Initial input value',
+  },
+}
+```
+
+Unlike attributes, properties belong directly to the DOM element object, so cannot be visualized in the markup.
+
+Reactions are possible as well:
+
+```js
+{
+  tag: 'input',
+  props: {
+    // value property reaction
+    value: (state) => state.value,
+  },
+}
+```
+
+```js
+{
+  tag: 'input',
+  // all properties reaction
+  props: (state) => ({
+    value: state.value,
+  }),
+}
+```
+
+#### Classes
+
+Classes is a convenient alias for `attrs.class`, where developers can manage their custom css classes. Usually it becomes helpful, when using external css libraries like Bootstrap or font icons like FontAwesome. The valid value of this property is a string with space separated classes or an array of string classes:
+
+```js
+{
+  tag: 'i',
+  classes: 'fa fa-solid',
+}
+```
+
+```js
+{
+  tag: 'i',
+  classes: ['fa', 'fa-solid'],
+}
+```
+
+Reaction can be also applied here:
+
+```js
+{
+  tag: 'i',
+  // reaction
+  classes: (state) => state.classes,
+}
+```
+
+#### Events
+
+Events object is used to listen to system or custom DOM events. There is a native event mechanism used under the hood, so it's good to leverage **event delegation** for bubbling events. General usage is reacting for user actions. Another case is child-to-parent communication. Consider the following example:
+
+```js
+{
+  tag: 'input',
+  events: {
+    // event name matches any system events like click, mouseover, etc
+    input(event) {
+      // `this` instance is a reference to the Context API
+    },
+  },
+}
+```
+
+Using the Context API developer can create custom events. For example:
+
+```js
+const listItem = {
+  tag: 'li',
+  events: {
+    click() {
+      const data = { prop: 'some data' };
+      this.emitEvent('dataCreated', data);
+    },
+  },
+};
+```
+
+Then listen to custom event it in the upper elements:
+
+```js
+{
+  tag: 'ul',
+  events: {
+    // event name matches emitted custom event name
+    // get a detail as data from CustomEvent instance
+    dataCreated({ detail: data }) {
+      // do something with data here
+    },
+  },
+  children: [listItem],
+}
+```
+
+#### Channels
+
+This feature implements **pub/sub** communication pattern and is used for **intercomponent messaging** providing a low level of code coupling. The implementation leverages **EventEmitter** under the hood to manage subscriptions. This is a powerful way of creating data flow between components whenever they are located in the project.
+<br><br>
+To prevent channel name conflicts, what is highly possible in big apps, a sender has to provide a **scope** of subscribers, so that only those components receive emitted messages. Scope accepts a folder or file path or an array of such paths. Paths can be absolute to the site root or namespaced like path in component reference. By default, messages are delivered to subscribers in the component boundaries if no scope specified.
+<br><br>
+Another crucial option of a channel message is a **select** function, which can help to deliver message only to those element contexts, which are selected by this function. Select function predicate must return boolean value to satisfy or filter out consumer contexts.
+
+Consider the following example using scoped channel:
+
+```js
+// message consumer
+{
+  tag: 'footer',
+  // object holding all message subscribers
+  channels: {
+    // create a 'headerMessage' topic subscriber
+    headerMessage(data) {
+      // handle passed data
     }
-    ```
-  - Attrs usage example:
-    <!-- eslint-skip -->
-    ```js
+  },
+}
+```
+
+```js
+// message provider
+{
+  tag: 'header',
+  events: {
+    // send message to footer component on header click
+    click() {
+      const data = { prop: 'header data' };
+      const options = { scope: '@app/path/to/footer' };
+      this.emitMessage('headerMessage', data, options);
+    },
+  },
+}
+```
+
+Using select option is helpful if we have multiple instances of the same schema on the page. Consider this example:
+
+```js
+// message consumer
+const createListItem = (id) => ({
+  tag: 'li',
+  attrs: { id },
+  // object holding all message subscribers
+  channels: {
+    // create a 'changeItemMessage' topic subscriber
+    changeItemMessage(data) {
+      // handle passed data
+    }
+  },
+});
+```
+
+```js
+// message provider
+{
+  tag: 'ul',
+  events: {
+    // send message to selected li's on click
+    click() {
+      const data = { prop: 'message for concrete item' };
+      // select only second list item as a message consumer by id
+      const select = (ctx) => ctx.attrs === 'second-li';
+      this.emitMessage('changeItemMessage', data, { select });
+    },
+  },
+  // create multiple instances of the same schema
+  children: [
+    createListItem('first-li'),
+    createListItem('second-li'),
+    createListItem('third-li'),
+  ],
+}
+```
+
+Note: consider channels as a synchronous in-memory message broker with scope and select options as restrictions not to end up with lots of messy messages. Subscriptions are self-destroyable to prevent memory leaks.
+
+#### Hooks
+
+These methods are typically used to run code at some point of element context lifecycle. For example, it's possible to initialize some data when the application is ready or when the context is destroyed to perform some cleaning actions. For now these hooks are available:
+
+```js
+{
+  tag: 'div',
+  hooks: {
+    // application is fully rendered and it's safe to perform changes
+    ready() {
+      // `this` is a reference to context API here
+    },
+    // the context of this schema is near to be destroyed, so it's
+    // the best place to clean up it
+    destroy() {
+      // `this` is a reference to context API here
+    },
+  },
+}
+```
+
+### 5. Schema Context API
+
+In terms of Swayer engine a **context** is an object, which is created in runtime for each real DOM node. The best way to explain it is to think about the analogue: schema relates to its context like a class relates to its instance. This means, that we can create a lot of contexts from a single schema. While processing schemas, the engine creates contexts with predefined properties and methods providing an API to access data and the engine functionality. It's done using the method binding, so **it's very crucial to create methods, not arrow functions as they won't accept the context**.
+
+Some public context properties hold the current values provided by the schema like tag, text, attrs, etc. Some can reflect on the real node on change: text, attrs, props, classes, events; while others cannot be changed at all: tag, channels, hooks. Children property is fully internal and not visible in the context API, because it represents the DOM structure, which should not be modified imperatively. Instead, developers can only use reactions to mutate children in declarative way.
+
+Another part of context API provides public engine functionality:
+
+- `moduleUrl: string` - get the full url of the component module. Helpful for locating the component.
+<br><br>
+- `router: Router` - the object helping with the navigation. E.g. call `this.router.go(path)` to navigate to another route.
+<br><br>
+- `emitEvent(name: string, data?: any): boolean` - emits a synthetic DOM event bubbling up through the component hierarchy, see [Events](#events) section for more details. Returns the result of native `dispatchEvent(event: Event): boolean`
+<br><br>
+- `emitMessage(name: string, data?: any, options?: ChannelOptions): void` - emits a data message to the channel by name. See [Channels](#channels) section for more details. Returns void.
+<br><br>
+- `click(): void` - native click method.
+<br><br>
+- `focus(): void` - native focus method.
+<br><br>
+- `blur(): void` - native blur method.
+
+See [types/index.d.ts](https://github.com/rohiievych/swayer/blob/main/types/index.d.ts) for detailed typing information. This API will be extended in the future.
+
+### 6. Reactivity
+
+Probably the most powerful feature of the Swayer engine. Reactivity is the ability of an object to react on some changes. Reactivity reduces a lot of imperative code by defining **reactions** - pure arrow functions, that are invoked by the engine providing state binding to the schema context.
+
+The basic syntax is `(state) => schema value`, where state is the special object containing reactive user data and schema value is the recalculated schema. Thanks to JavaScript Proxy and metaprogramming techniques, the engine reruns this function everytime the properties of the state, used in this function, are changed. Reactive approach allows us to concentrate on data removing all the trivial work, that is hidden in the engine machinery.
+
+Reactions have some caveats to keep in mind:
+
+- **Reactions are synchronous, don't make them async**. This is a JavaScript Proxy limitation.
+- **Do not set state properties inside a reaction as will throw "Maximum call stack size exceeded" error**.
+This is like the recursive function without exit condition.
+
+To make things clear, consider the reactivity flow under the hood: `update state -> call reaction(state) -> reflect schema property -> update DOM/CSSOM`.
+
+If the state is updated inside the reaction, we get: `update state -> reaction(state) -> update state -> reaction(state) ...` - endless recursion.
+
+#### Model
+
+Model is a schema property object, which is responsible for holding state and its mutations. Thus, `state` is the mandatory property in every model. It is also the part of [Context API](#5-schema-context-api) and can be used inside events, channels or hooks. Defining the model as a separate class makes schemas concise. Therefore, when developer create a model, he can fully focus on the state and how it is going to be mutated providing some model methods. In terms of MVVM, view model is a schema and the model is the object with state described above.
+
+Model have some caveats to keep in mind:
+
+- The model scope is restricted to the component if it's defined in the root element of that component, what means it's shared among all it's elements, excluding those, which referenced as child components. This is done to prevent state leakage through the whole app, but making it useful across the component.
+- If a model is defined for the concrete element, it takes a precedence over the component's one.
+- If a model is defined in a static schema, the related state will stay the same for all instantiated contexts. To make it unique for each context, it must be recreated with schema factory.
+
+#### How Swayer reactivity reduces your work
+
+See the following component example showing how reactivity works:
+
+```js
+{
+  tag: 'div',
+  // define a model
+  model: {
+    // define a state with some data inside
+    state: {
+      // this is a reactive property
+      text: 'Initial text',
+    },
+    // a method to mutate a state
+    update(newText) {
+      this.state.text = newText;
+    },
+  },
+  children: [
     {
       tag: 'input',
       attrs: {
-        name: 'age',
         type: 'text',
+        placeholder: 'Type here...',
       },
-    }
-    ```
-    <br>
-- **Props** object corresponds to a set of element's properties.
-  <br><br>
-
-  - Props declaration syntax:
-    <!-- eslint-skip -->
-    ```ts
-    interface Props {
-      // key-value property, see types/index.d.ts for more type info
-      propName: string;
-    }
-    ```
-  - Props usage example:
-    <!-- eslint-skip -->
-    ```js
-    {
-      tag: 'input',
-      props: {
-        value: 'Initial input value',
-      },
-    }
-    ```
-    <br>
-
-- **State** is a custom object, where developer should store component related
-  data.
-  <br><br>
-
-  - State declaration syntax:
-    <!-- eslint-skip -->
-    ```ts
-    state: object;
-    ```
-  - State usage example:
-    <!-- eslint-skip -->
-    ```js
-    {
-      tag: 'button',
-      state: {
-        clickCounter: 0,
-      },
-    }
-    ```
-    <br>
-
-- **Methods** are used to share some UI related code between listeners,
-  subscribers and hooks.
-  <br><br>
-  - Methods declaration syntax:
-    <!-- eslint-skip -->
-    ```ts
-    interface Methods {
-      methodName(args: any): any;
-    }
-    ```
-  - Method usage example:
-    <!-- eslint-skip -->
-    ```js
-    {
-      tag: 'form',
-      methods: {
-        prepareData(data) {
-          // `this` instance is a reference to component instance
-          // do something with data
-        },
-      },
-    }
-    ```
-    <br>
-- **Events** are used to listen to system or synthetic DOM events. There is a
-  native event mechanism used under the hood, so it's good to leverage
-  **event delegation** for bubbling events. Common usage is reacting for user
-  actions and gathering user information. Additionally, you can transfer data to
-  parent components with custom events, what is a bit simpler than using
-  channels.
-  <br><br>
-  - Listeners declaration syntax:
-    <!-- eslint-skip -->
-    ```ts
-    interface Events {
-      eventName(event: Event): void;
-    }
-    ```
-  - Listeners usage example:
-    <!-- eslint-skip -->
-    ```js
-    {
-      tag: 'input',
       events: {
-        // event name matches any system events like click, mouseover, etc
-        input(event) {
-          // `this` instance is a reference to component instance
-          // do something with event
+        input() {
+          // update the model on text input
+          // this will trigger the reaction in p element
+          const text = this.props.value;
+          this.model.update(text);
         },
-      },
-    }
-    ```
-    <!-- eslint-skip -->
-    ```js
-    {
-      tag: 'ul',
-      events: {
-        // event name matches emitted custom event name
-        removeTodoEvent({ detail: todo }) {
-          // `this` instance is a reference to component instance
-          // do something with todo data
-        },
-      },
-    }
-    ```
-  - Custom event emission declaration syntax:
-    <!-- eslint-skip -->
-    ```ts
-    // component API
-    emitEvent(name: string, data?: any): boolean;
-    ```
-  - Custom event emission usage example:
-    <!-- eslint-skip -->
-    ```js
-    this.emitEvent('removeTodoEvent', todo);
-    ```
-    <br>
-- **Channels** feature implements **pub/sub** communication pattern and is used
-  for **intercomponent messaging**. The implementation leverages **EventEmitter**
-  under the hood to manage subscriptions. This is a powerful way of creating data
-  flow between components whenever they are located in the project. To prevent
-  channel name conflicts, what is highly possible in big apps, a sender has to
-  provide a **scope** of subscribers, so that only selected components receive
-  emitted messages.<br><br>
-  **Important**: you have to add `{ meta: import.meta }` into schema if using
-  channels.
-  <br><br>
-
-  - Subscribers declaration syntax:
-    <!-- eslint-skip -->
-    ```ts
-    interface Channels {
-      channelName(dataMessage: any): void;
-    }
-    ```
-  - Subscribers usage example:
-    <!-- eslint-skip -->
-    ```js
-    {
-      tag: 'form',
-      meta: import.meta,
-      channels: {
-        // channel name matches developer defined name on emission
-        addTodoChannel(todo) {
-          // `this` instance is a reference to component instance
-          // do something with todo data
-        },
-      },
-    }
-    ```
-  - Message emission declaration syntax:
-    <!-- eslint-skip -->
-    ```ts
-    // component API
-    emitMessage(name: string, data?: any, options?: ChannelOptions): void;
-    ```
-    <!-- eslint-skip -->
-    ```ts
-    // Component API
-    interface MessageOptions {
-      // path or array of paths to folder or module
-      // defaults to current module
-      scope?: string | string[];
-    }
-    ```
-  - Message emission usage examples:
-    <!-- eslint-skip -->
-    ```js
-    // subsribers declared only in the same module will receive todo message
-    this.emitMessage('addTodoChannel', { todo });
-    ```
-    <!-- eslint-skip -->
-    ```js
-    // subsribers declared only in main.component.js module will receive todo message
-    const scope = './main/main.component';
-    this.emitMessage('addTodoChannel', { todo }, { scope });
-    ```
-    <!-- eslint-skip -->
-    ```js
-    // subsribers declared in all modules under main folder will receive todo message
-    const scope = '/app/main';
-    this.emitMessage('addTodoChannel', { todo }, { scope });
-    ```
-    <!-- eslint-skip -->
-    ```js
-    // subsribers declared in header and footer modules will receive todo message
-    const scope = ['./header/header.component', './footer/footer.component'];
-    this.emitMessage('addTodoChannel', { todo }, { scope });
-    ```
-
-- **Hooks** are the special component handlers. They are typically used to run
-  code at some point of component lifecycle. For example, it's possible to
-  initialize some data when component and its children are created and ready to
-  be managed. Right now **init** hook is available.
-  <br><br>
-  - Hooks declaration syntax:
-    <!-- eslint-skip -->
-    ```ts
-    interface Hooks {
-      init(): void;
-    }
-    ```
-  - Hooks usage example:
-    <!-- eslint-skip -->
-    ```js
-    {
-      tag: 'form',
-      hooks: {
-        init() {
-          // `this` instance is a reference to component instance
-          // run initialization code
-        },
-      },
-    }
-    ```
-
-### 4. Component styling
-
-Styles in Swayer are simple JavaScript objects extending **CSSStyleDeclaration**
-standard interface. All CSS properties are available in camelCase. It's possible
-to add **inline styles via `attrs.style`** attribute or create **CSSStyleSheets**.
-Swayer extends styling syntax by adding intuitive properties like **hover** as
-it would be another set of CSS. Such approach enables **CSS selector
-abstraction**, so that developer's cognitive work is reduced. Pseudo-classes,
-pseudo-elements and animations are implemented with this abstraction.
-
-Styles declaration syntax see in **types/index.d.ts**.
-
-Styles usage examples:
-
-- Inline style (not preferred):
-  <!-- eslint-skip -->
-  ```js
-  {
-    tag: 'p',
-    attrs: {
-      style: {
-        // these props will be inlined
-        fontSize: '14px',
-        color: 'red',
       },
     },
-  }
-  ```
-- CSS style properties:
-  <!-- eslint-skip -->
-  ```js
-  {
-    tag: 'p',
-    styles: {
-      // simply add some CSS properties
-      fontSize: '14px',
+    {
+      tag: 'p',
+      // reaction with state recalculation, state is the model.state
+      // described above in the root component
+      text: (state) => 'Hello ' + state.text,
+    }
+  ],
+}
+```
+
+In case of vanilla JS, we would implement the same functionality in this way:
+
+```html
+<!-- Initial HTML markup -->
+<div>
+  <input type="text", placeholder="Type here...">
+  <p>Initial text</p>
+</div>
+```
+
+```js
+// Get paragraph element imperatively and create text updater
+const p = document.querySelector('p');
+const updatePara = (text) => p.textContent = 'Hello ' + text;
+
+// Get input element imperatively and bind updater to text input
+const input = document.querySelector('input');
+input.addEventListener('input', (event) => updateText(event.target.value));
+```
+
+The difference in development time is not very big here. But what if we want to modify this feature and add another text container with same text updates? In the schema based approach, we need to add a new child near the paragraph:
+
+```js
+{
+  tag: 'span',
+  text: (state) => 'Hello ' + state.text,
+}
+```
+
+Do the same with vanilla:
+
+```html
+<!-- Update markup with a new span -->
+<span>Initial text</span>
+```
+
+```js
+// Get span element imperatively and create text updater
+const span = document.querySelector('span');
+const updateSpan = (text) => span.textContent = 'Hello ' + text;
+
+// Get input element imperatively and bind updater to text input
+const input = document.querySelector('input');
+input.addEventListener('input', (event) => updateSpan(event.target.value));
+```
+
+Then we have to perform refactoring to reduce the code, but the guy using schema is already implementing the next feature... So we have just done in three times more work! It could be done better using React, but try to apply such change just in two lines of code - developer still need to write another piece of JSX markup and a bit of scripts. Swayer engine will do it automatically, allowing developer to concentrate on features. So what does the engine here - it guarantees the linear time of development, while keeping the app performant, readable and reusable.
+
+### 7. Styling
+
+All styles are written in schemas using JavaScript. This means that developer don't need to use additional preprocessors with random syntax. Moreover, no need to write even CSS selectors thankfully to **CSS selector abstraction**. To style the element developer just need to define the `styles` object in element schema, which can be also shared among other element schemas as a plain object. The engine will effectively resolve these styles into the pieces of pure CSS directly in markup or CSSOM. So the page will contain only those styles, that used for elements on current page and not more.
+
+The engine extends styling syntax by adding intuitive properties like **hover** as it would be another set of CSS properties. Pseudo-classes, pseudo-elements and animations are implemented too.
+
+Let's go through the styling capabilities:
+
+#### Simple styles
+
+```js
+{
+  tag: 'p',
+  styles: {
+    // add some CSS properties like in the CSS rule,
+    // but in camelCase
+    fontSize: '14px',
+    color: 'red',
+  },
+}
+```
+
+#### Pseudo classes and elements
+
+```js
+{
+  tag: 'p',
+  styles: {
+    transition: 'backgroundColor 0.2s ease',
+    // make this component blue on hover
+    hover: {
+      backgroundColor: 'blue',
+    },
+    // make the first-of-type text red
+    first: {
       color: 'red',
     },
-  }
-  ```
-- Pseudo classes/elements:
-  <!-- eslint-skip -->
-  ```js
-  {
-    tag: 'p',
-    styles: {
+  },
+}
+```
+
+```js
+{
+  tag: 'p',
+  styles: {
+    color: 'red',
+    // make the first-of-type blue on hover
+    first: {
       transition: 'backgroundColor 0.2s ease',
-      // make this component blue on hover
       hover: {
         backgroundColor: 'blue',
       },
-      // make the first-of-type text red
-      first: {
+    },
+  },
+}
+```
+
+```js
+{
+  tag: 'p',
+  styles: {
+    position: 'relative',
+    // add before pseudo-element
+    before: {
+      content: `''`,
+      position: 'absolute',
+      right: '0',
+    },
+  },
+}
+```
+
+#### Functional pseudo-classes
+
+```js
+{
+  tag: 'p',
+  styles: {
+    // apply style rule equivalently to nth-of-type(2n)
+    nth: {
+      arg: '2n',
+      rule: {
+        borderBottom: '1px solid red',
         color: 'red',
       },
     },
-  }
-  ```
-  <!-- eslint-skip -->
-  ```js
-  {
-    tag: 'p',
-    styles: {
+  },
+}
+```
+
+#### Animations
+
+```js
+{
+  tag: 'div',
+  styles: {
+    // create multiple animations and apply them to element
+    animations: [
+      {
+        // CSS animation name
+        name: 'fadeIn',
+        // CSS animation properties
+        props: 'linear 3s',
+        // CSS animation keyframes
+        keyframes: {
+          'from': {
+            opacity: 0,
+          },
+          '50%': {
+            opacity: 0.5,
+          },
+          'to': {
+            opacity: 1,
+          },
+        },
+      },
+      {
+        name: 'fadeOut',
+        props: 'linear 3s',
+        keyframes: {
+          from: {
+            opacity: 1,
+          },
+          to: {
+            opacity: 0,
+          },
+        },
+      },
+    ],
+  },
+}
+```
+
+```js
+{
+  tag: 'p',
+  styles: {
+    // apply existing animations to element
+    animations: [
+      { name: 'fadeIn' },
+      { name: 'fadeOut', props: 'ease-out 2s' },
+    ],
+  },
+}
+```
+
+#### Computed styles
+
+Styles can be written with reactions too. This is very helpful as developer can bind a model state to the styles, so there is no more need to mess with class toggling. Simply create a reaction and return styles calculated on the state.
+
+Consider the following examples:
+
+```js
+{
+  tag: 'p',
+  model: {
+    state: {
+      isValid: true,
+    },
+  },
+  // all styles are changed on `state.isValid` value change
+  styles: (state) => state.isValid
+    ? { color: 'black' }
+    : { color: 'red' },
+}
+```
+
+```js
+{
+  tag: 'p',
+  model: {
+    state: {
+      isValid: true,
+    },
+  },
+  styles: {
+    // these styles won't be affected
+    fontSize: '14px',
+    fontWeight: 'bold',
+    // compute only the needed styles
+    compute: (state) => state.isValid
+      ? { color: 'black' }
+      : { color: 'red' },
+  },
+}
+```
+
+#### Inline styles
+
+Additionally, it's possible to add inline styles in `attrs.style` as an object. Unlike the `styles` property, these styles inlined into the style attribute.
+
+```js
+{
+  tag: 'p',
+  attrs: {
+    style: {
+      // these props will be inlined
+      fontSize: '14px',
       color: 'red',
-      // make the first-of-type blue on hover
-      first: {
-        transition: 'backgroundColor 0.2s ease',
-        hover: {
-          backgroundColor: 'blue',
-        },
-      },
     },
-  }
-  ```
-  <!-- eslint-skip -->
-  ```js
-  {
-    tag: 'p',
-    styles: {
-      position: 'relative',
-      // add before pseudo-element
-      before: {
-        content: `''`,
-        position: 'absolute',
-        right: '0',
-      },
-    },
-  }
-  ```
-- Functional pseudo-classes:
-  <!-- eslint-skip -->
-  ```js
-  {
-    tag: 'p',
-    styles: {
-      // apply style rule equivalently to nth-of-type(2n)
-      nth: {
-        arg: '2n',
-        rule: {
-          borderBottom: '1px solid red',
-          color: 'red',
-        },
-      },
-    },
-  }
-  ```
-- Animations:
-  <!-- eslint-skip -->
-  ```js
-  {
-    tag: 'div',
-    styles: {
-      // create multiple animations and apply them to component
-      animations: [
+  },
+}
+```
+
+The code above is rendered to: `<p style="font-size: 14px; color: red;"></p>`
+
+
+### 8. Routing
+
+Routing is the mechanism used for navigation through different components basing on the url path. Routing is the crucial part of any Single Page Application as it performs navigation without full page reload. The engine provides a special schema, where the right route is matched and the corresponding schema is rendered. This is done by creating a tree of routers for each group of routes.
+
+#### Route types example
+
+```js
+{
+  tag: 'div',
+  children: [
+    {
+      // for each group of routes a child router is created
+      // child router holds the segment of the path
+      // excluding parent's segment
+      routes: [
+        // pattern is the string, that the url path is going to match
+        // in this case empty string means no path, it will be applied
+        // for '/'
         {
-          name: 'fadeIn',
-          props: 'linear 3s',
-          keyframes: {
-            'from': {
-              opacity: 0,
-            },
-            '50%': {
-              opacity: 0.5,
-            },
-            'to': {
-              opacity: 1,
-            },
+          pattern: '',
+          // the element schema to be rendered
+          schema: {
+            tag: 'p',
+            text: 'Paragraph element is routed!',
           },
         },
         {
-          name: 'fadeOut',
-          props: 'linear 3s',
-          keyframes: {
-            from: {
-              opacity: 1,
-            },
-            to: {
-              opacity: 0,
-            },
+          // matches /products
+          pattern: 'products',
+
+          // the component reference schema to be rendered
+          schema: {
+            path: '@app/path/to/products.component',
+            input: 'any data',
           },
         },
+        {
+          // pattern supports parameters with :param syntax
+          // matches /products/12345
+          pattern: 'products/:id',
+
+          // a function that allows route to be matched on some
+          // condition, useful to validate params
+          canMatch: (params) => params.id === '12345',
+
+          // schema can be represented as arrow function or async
+          // function that extracts params from path returing
+          // a schema to be rendered
+          schema: (params) => ({
+            tag: 'p',
+            text: `Product ${params.id} is routed!`,
+          }),
+        },
+        {
+          // array pattern makes a union of possible path segments
+          // consider this as || (or), matches /admin or /adm
+          pattern: ['admin', 'adm'],
+
+          // simple text schema to be rendered
+          schema: 'Here will be admin page!',
+        },
+        {
+          // any route pattern, useful when redirecting to 404 page
+          // if no route match found, this will be selected
+          // matches /any/path
+          pattern: '**',
+          schema: '404',
+        },
       ],
+    }
+  ],
+}
+```
+
+The routes in one group have a match, where the winner is the route with the most specific pattern, so **the order of routes matters**.
+
+Here is a small cheat sheet example for routes matching order:
+1. `''` (empty path segment)
+2. `:param` (parameter segment)
+3. `products` (static segment)
+4. `**` (any segment)
+
+#### Router
+
+The Context API provides a `router` property. Currently, one method can be used:
+- Go to the relative path segment, applied to the nearest router: `this.router.go('path/segment')`
+- Go to the absolute path, applied to the root router: `this.router.go('/root/path')`
+
+`go` method updates the path or path segment and reloads corresponding router, which will match his routes against new path.
+
+Example:
+
+```js
+{
+  tag: 'button',
+  events: {
+    click() {
+      this.router.go('/root/path');
     },
-  }
-  ```
-  <!-- eslint-skip -->
-  ```js
-  {
-    tag: 'p',
-    styles: {
-      // apply existing animations to component
-      animations: [
-        { name: 'fadeIn' },
-        { name: 'fadeOut', props: 'ease-out 2s' },
-      ],
-    },
-  }
-  ```
+  },
+}
+```
 
-### 5. Component reflection
-
-Component properties are meant to be **live**. This behavior makes updates to be
-automatically applied to underlying HTML elements. At the moment reflection is
-supported for the following features:
-
-- Text
-- Attrs, including inline style
-- Props
-- Events
-
-Reflection for other features is going to be added in future releases.
-
-### 6. Component API
-
-Swayer creates some instruments for component management enabling dynamic
-application development. While bootstrapping a component Swayer **enriches
-context** used in developer-defined methods, events, channels and hooks.
-Only **object method** declaration syntax is applicable as it's impossible
-to change the context of arrow functions. Basically **this** reference is
-a reference to a component, not schema. Right now the list of component API
-is the following:
-
-- Properties:
-  - `original` - reference to original schema.
-    <br><br>
-- Methods:
-  - `emitEvent(name: string, data?: any): boolean` - emits a synthetic
-    DOM event bubbling up through the component hierarchy, see Events section
-    for more details. Returns the result of
-    native `dispatchEvent(event: Event): boolean`
-  - `emitMessage(name: string, data?: any, options?: ChannelOptions): void` -
-    emits a data message to the channel by name. See Channels section for more
-    details. Returns void.
-  - `destroy(): void` - remove component itself with its children and release memory.
-  - `click(): void` - native click method.
-  - `focus(): void` - native focus method.
-  - `blur(): void` - native blur method.
-    <br><br>
-- Children methods:
-  - `push(...schemas: Schema[]): Promise<Component[]>` - adds a new component
-    to the end of children.
-  - `pop(): Component` - removes the last child component.
-  - `splice(start: number, deleteCount: number, ...replacements: Schema[]): Promise<Component[]>` -
-    deletes or replaces several component children.
-
-See types/index.d.ts for more type information. This API will be extended with
-new properties and methods in future releases.
-
-### 7. Application architecture and domain code
-
-Swayer does not provide any restrictions of creating domain logics, but it's
-very likely that the framework will implement some architectural best practises.
-At the moment it's recommended to design apps with **feature components and
-separated domain code**. Conventionally, developers should use only UI related
-code in components and business code in separate modules using class instances
-as singletons.
-See [examples](https://github.com/metarhia/swayer/tree/main/examples) to learn
-how it works.
-
-## Browser compatibility
+## Compatibility
 
 - Chromium based browsers (v80+)
 - Firefox (v90+)
 - Safari (v14.1+)
 - Opera (v67+)
+- Node.js (v16+)
 
 ## License & Contributors
 
-Copyright (c) 2021 Metarhia contributors.<br>
-See GitHub for
-full [contributors list](https://github.com/metarhia/swayer/graphs/contributors)
-.<br>
+Copyright (c) 2023 Roman Ohiievych.<br>
+See GitHub for full [contributors list](https://github.com/rohiievych/swayer/graphs/contributors).<br>
 Swayer framework is [MIT licensed](./LICENSE).<br>
-Project coordinator: &lt;r.ogiyevich@gmail.com&gt;
+Original author: &lt;roman@swayer.dev&gt;
