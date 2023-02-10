@@ -520,7 +520,7 @@ Tag is obviously a name of HTML element tag. Used by engine to create a correspo
 
 ```js
 {
-  tag: 'div';
+  tag: 'div',
 }
 ```
 The piece of code above is rendered to `<div></div>` HTML element.
