@@ -10,7 +10,7 @@ const bodyStyles = {
 };
 
 /** @returns {[ComponentRef, Schema]} */
-const createPage = (title, contentComponent) => [
+const createPage = (title, contentSchema) => [
   {
     path: '@site/head.component',
     input: title,
@@ -19,7 +19,7 @@ const createPage = (title, contentComponent) => [
     tag: 'body',
     styles: bodyStyles,
     children: [
-      contentComponent,
+      contentSchema,
       { path: '@site/footer.component' },
     ],
   },
@@ -44,7 +44,7 @@ export default ({ locale }) => {
         routes: [
           {
             pattern: '',
-            component: createPage(
+            schema: createPage(
               'Todos',
               [
                 { path: '@site/header.component' },
@@ -54,14 +54,14 @@ export default ({ locale }) => {
           },
           {
             pattern: [':id', 'todos/:id'],
-            component: (params) => createPage(
+            schema: (params) => createPage(
               `Todo #${params.id}`,
               `Hey, this is todo '${params.id}'`,
             ),
           },
           {
             pattern: '**',
-            component: createPage(
+            schema: createPage(
               '404',
               'Page not found',
             ),

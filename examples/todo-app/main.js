@@ -3,11 +3,13 @@ const locales = {
   en: 'en',
 };
 
+/** @returns {ComponentRef} */
 const createPageComponent = (locale = locales.uk) => ({
   path: '@site/page.component',
   input: { locale },
 });
 
+/** @type {Schema} */
 export default {
   namespaces: {
     '@site': 'app/site',
@@ -28,16 +30,16 @@ export default {
       routes: [
         {
           pattern: ['', 'todos'],
-          component: createPageComponent(),
+          schema: createPageComponent(),
         },
         {
           pattern: [':locale', ':locale/todos'],
           canMatch: (params) => params.locale in locales,
-          component: (params) => createPageComponent(locales[params.locale]),
+          schema: (params) => createPageComponent(locales[params.locale]),
         },
         {
           pattern: '**',
-          component: createPageComponent(),
+          schema: createPageComponent(),
         },
       ],
     },

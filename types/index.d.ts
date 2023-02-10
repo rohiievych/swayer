@@ -10,7 +10,7 @@ interface ComponentRef {
 
 interface Route<TModel extends Model> {
   pattern: MaybeArray<string>;
-  component: RouteComponent<TModel>;
+  schema: RouteSchema<TModel>;
   canMatch?: (params: Record<string, string>) => boolean | Promise<boolean>;
 }
 
@@ -26,10 +26,10 @@ interface Model<State = UserObject> extends UserObject {
   state: State;
 }
 
-type RouteComponent<TModel extends Model> = MaybeArray<SchemaValue<TModel>>
-  | RouteComponentResolver<TModel>;
+type RouteSchema<TModel extends Model> = MaybeArray<SchemaValue<TModel>>
+  | RouteSchemaResolver<TModel>;
 
-type RouteComponentResolver<TModel extends Model> = (
+type RouteSchemaResolver<TModel extends Model> = (
   params: Record<string, string>,
 ) => MaybeArray<SchemaValue<TModel>>
   | Promise<SchemaValue<TModel>>;
@@ -58,6 +58,7 @@ type Props<State> = Partial<{
 interface Schema<TModel extends Model, State = TModel['state']> {
   tag?: keyof HTMLElementTagNameMap;
   namespaces?: Record<string, string>,
+  preload?: string[];
   text?: BasicPrimitives | Reaction<State, BasicPrimitives>;
   classes?: MaybeArray<string> | Reaction<State, MaybeArray<string>>;
   styles?: Styles<State> | Reaction<State, CSSPropsValue>;
