@@ -4,7 +4,7 @@
 [![npm downloads/month](https://img.shields.io/npm/dm/swayer.svg)](https://www.npmjs.com/package/swayer)
 [![npm downloads](https://img.shields.io/npm/dt/swayer.svg)](https://www.npmjs.com/package/swayer)
 [![snyk](https://snyk.io/test/github/rohiievych/swayer/badge.svg)](https://snyk.io/test/github/rohiievych/swayer)
-[![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/metarhia/swayer/blob/main/LICENSE)
+[![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/rohiievych/swayer/blob/main/LICENSE)
 
 **Comprehensive UI engine** for fast and low overhead JavaScript development
 
@@ -46,8 +46,8 @@ npm start
 ## Showcase
 
 - See
-  online [Todo Application demo](https://metarhia.github.io/swayer/examples/todo-app/)
-- Play with [example](https://github.com/metarhia/swayer/tree/main/examples/todo-app) code to
+  online [Todo Application demo](https://rohiievych.github.io/swayer/examples/todo-app/)
+- Play with [example](https://github.com/rohiievych/swayer/tree/main/examples/todo-app) code to
   investigate how it works
 
 ## Contacts
