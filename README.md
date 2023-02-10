@@ -83,7 +83,7 @@ You simply don't need to use different CSS-like syntax with Swayer. JavaScript i
 
 **Important: do not assume HTML or CSS to be legacy languages!**<br> Swayer compiles component schemas down to the pure HTML/CSS on server side or directly to DOM/CSSOM in browsers while **making it consistent with your JavaScript logic**.
 
-## Features:
+## Features
 
 - #### General
   - Tiny runtime
