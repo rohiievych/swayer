@@ -2,7 +2,7 @@
 
 ## [Unreleased][unreleased]
 
-## [1.0.0-alpha.1][] - 2023-xx-xx
+## [1.0.0-alpha.1][] - 2023-02-11
 
 ### Added
 
