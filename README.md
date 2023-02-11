@@ -426,13 +426,13 @@ Basically, schema is a template from which engine instantiates contexts represen
 Typical element can be described with such schema:
 
 ```js
-const para = {
+const paragraph = {
   tag: 'p',
   text: 'This is a paragraph',
 }
 ```
 
-But when default export is present, it becomes a component:
+But when `default export` is present, it becomes a component module:
 
 ```js
 export default {
@@ -441,7 +441,22 @@ export default {
 };
 ```
 
-`export default` is mandatory for creating components. Bare `export` won't work as the engine relies on default export.
+In case if a fragment is needed, schema array can be created as a component:
+
+```js
+export default [
+  {
+    tag: 'p',
+    text: 'This is the first text component',
+  },
+  {
+    tag: 'p',
+    text: 'This is the second text component',
+  },
+];
+```
+
+**`export default` is mandatory for creating components**. Bare `export` won't work as the engine relies on default export.
 
 As the application grows it becomes hard to manage all schemas in a single file. To address this issue Swayer uses **ES6 standard modules** to separate components and load them on demand. It's possible to lazily load such components with component reference:
 
