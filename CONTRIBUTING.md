@@ -25,14 +25,8 @@ If you have a question, please check out our support groups and channels for
 developers community:
 
 Telegram:
-
-- Swayer UA community:
-    - channel: [SwayerUA](https://t.me/SwayerUA)
-    - chat: [SwayerUAChat](https://t.me/SwayerUAChat)
-
-- Swayer EN community:
-    - channel: [SwayerEN](https://t.me/SwayerEN)
-    - chat: [SwayerENChat](https://t.me/SwayerENChat)
+- channel: [Swayer](https://t.me/SwayerEngine)
+- chat: [Swayer Chat](https://t.me/SwayerChat)
 
 E-mail: [roman@swayer.dev](mailto:roman@swayer.dev)
 

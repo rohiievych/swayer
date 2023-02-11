@@ -10,10 +10,5 @@ If you have a question, please check out our support groups and channels for
 developers community:
 
 Telegram:
-
-- Channel for Swayer UA community: https://t.me/SwayerUA
-    - Linked Swayer UA chat: https://t.me/SwayerUAChat
-
-
-- Channel for Swayer EN community: https://t.me/SwayerEN
-    - Linked Swayer UA chat: https://t.me/SwayerENChat
+  - channel: [Swayer](https://t.me/SwayerEngine)
+  - chat: [Swayer Chat](https://t.me/SwayerChat)
