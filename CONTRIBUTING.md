@@ -24,14 +24,17 @@ understanding!
 If you have a question, please check out our support groups and channels for
 developers community:
 
-Join the community in Telegram:
+Telegram:
 
-- Channel for Swayer UA community: https://t.me/SwayerUA
-  - Linked Swayer UA chat: https://t.me/SwayerUAChat
+- Swayer UA community:
+    - channel: [SwayerUA](https://t.me/SwayerUA)
+    - chat: [SwayerUAChat](https://t.me/SwayerUAChat)
 
+- Swayer EN community:
+    - channel: [SwayerEN](https://t.me/SwayerEN)
+    - chat: [SwayerENChat](https://t.me/SwayerENChat)
 
-- Channel for Swayer EN community: https://t.me/SwayerEN
-  - Linked Swayer UA chat: https://t.me/SwayerENChat
+E-mail: [roman@swayer.dev](mailto:roman@swayer.dev)
 
 ## Pull Requests
 
