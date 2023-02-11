@@ -1,0 +1,63 @@
+{
+  "name": "swayer",
+  "version": "1.0.0-alpha.1",
+  "description": "Schema based UI engine",
+  "author": "Roman Ohiievych <roman@swayer.dev>",
+  "license": "MIT",
+  "keywords": [
+    "app",
+    "application",
+    "lightweight",
+    "scalable",
+    "web",
+    "UI",
+    "framework",
+    "engine"
+  ],
+  "main": "index.js",
+  "type": "module",
+  "types": "types/index.d.ts",
+  "readmeFilename": "README.md",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/metarhia/swayer"
+  },
+  "bugs": {
+    "url": "https://github.com/metarhia/swayer/issues",
+    "email": "roman@swayer.dev"
+  },
+  "homepage": "https://metarhia.com",
+  "funding": {
+    "type": "patreon",
+    "url": "https://www.patreon.com/rohiievych"
+  },
+  "files": [
+    "index.js",
+    "cli",
+    "lib",
+    "types"
+  ],
+  "bin": {
+    "swr": "bin/swr.js"
+  },
+  "scripts": {
+    "types": "tsc",
+    "test": "npm run lint && npm run types && metatests test",
+    "lint": "eslint --ext .js,.ts,.json,.md,.yml .",
+    "fix": "npm run lint -- --fix"
+  },
+  "dependencies": {
+    "jsdom": "^21.1.0",
+    "pretty": "^2.0.0",
+    "terser": "^5.16.3"
+  },
+  "devDependencies": {
+    "@types/node": "^18.11.19",
+    "@typescript-eslint/eslint-plugin": "^5.50.0",
+    "@typescript-eslint/parser": "^5.50.0",
+    "eslint": "^8.33.0",
+    "eslint-config-metarhia": "^8.1.0",
+    "globals": "^13.20.0",
+    "typescript": "^4.9.5"
+  }
+}

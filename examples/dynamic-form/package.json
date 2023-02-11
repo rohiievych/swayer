@@ -1,0 +1,27 @@
+{
+  "name": "dynamic-form-example",
+  "version": "1.0.0",
+  "description": "Simple dynamic form",
+  "author": "Roman Ohiievych <roman@swayer.dev>",
+  "license": "MIT",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/metarhia/swayer"
+  },
+  "bugs": {
+    "url": "https://github.com/metarhia/swayer/issues",
+    "email": "r.ogiyevich@gmail.com"
+  },
+  "homepage": "https://metarhia.com",
+  "funding": {
+    "type": "patreon",
+    "url": "https://www.patreon.com/rohiievych"
+  },
+  "scripts": {
+    "start": "swr serve"
+  },
+  "dependencies": {
+    "swayer": "file:../.."
+  }
+}

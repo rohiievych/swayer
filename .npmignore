@@ -1,0 +1,9 @@
+node_modules
+examples
+test
+*.log
+*.pem
+*.done
+.github
+.idea
+.DS_Store
