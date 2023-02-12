@@ -8,7 +8,10 @@
     "start": "swr serve",
     "start:ssr": "swr serve --mode ssr",
     "build": "swr build && swr spa dist",
-    "build:prod": "swr build --prod && swr spa dist"
+    "build:prod": "swr build --prod && swr spa dist",
+    "test": "npm run lint && tsc",
+    "lint": "eslint .",
+    "fix": "npm run lint -- --fix"
   },
   "dependencies": {
     "swayer": "^1.0.0-alpha.2"
