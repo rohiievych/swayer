@@ -1,22 +1,22 @@
 {
   "name": "swayer-starter-app",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Initial Swayer application",
   "type": "module",
   "scripts": {
     "start": "swr serve",
-    "start:ssr": "swr serve --ssr",
+    "start:ssr": "swr serve --mode ssr",
     "build": "swr build && swr spa dist",
     "build:prod": "swr build --prod && swr spa dist"
   },
   "dependencies": {
-    "swayer": "^1.0.0-alpha.1"
+    "swayer": "^1.0.0-alpha.2"
   },
   "devDependencies": {
-    "@types/node": "^18.11.18",
-    "@typescript-eslint/eslint-plugin": "^5.50.0",
-    "@typescript-eslint/parser": "^5.50.0",
-    "eslint": "^8.33.0",
+    "@types/node": "^18.13.0",
+    "@typescript-eslint/eslint-plugin": "^5.51.0",
+    "@typescript-eslint/parser": "^5.51.0",
+    "eslint": "^8.34.0",
     "globals": "^13.20.0",
     "typescript": "^4.9.5"
   }

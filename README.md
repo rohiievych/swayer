@@ -1326,4 +1326,6 @@ Example:
 Copyright (c) 2023 Roman Ohiievych.<br>
 See GitHub for full [contributors list](https://github.com/rohiievych/swayer/graphs/contributors).<br>
 Swayer framework is [MIT licensed](./LICENSE).<br>
-Original author: &lt;roman@swayer.dev&gt;
+Original author: &lt;roman@swayer.dev&gt;<br>
+
+Totally made in Ukraine 🇺🇦
