@@ -39,10 +39,10 @@ export default [
           },
         },
       ],
-      'comma-dangle': ['error', 'always-multiline'],
       'handle-callback-err': 'off',
       'consistent-return': 'off',
       'class-methods-use-this': 'off',
+      'comma-dangle': ['error', 'always-multiline'],
       'quotes': ['error', 'single', { allowTemplateLiterals: true }],
       'quote-props': ['error', 'consistent-as-needed'],
       'max-params': ['error', 4],
@@ -72,6 +72,7 @@ export default [
     rules: {
       ...ts.configs.recommended.rules,
       ...ts.configs['recommended-requiring-type-checking'].rules,
+      'no-undef': 'off',
     },
   },
 ];

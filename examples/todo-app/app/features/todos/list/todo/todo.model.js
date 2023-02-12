@@ -1,3 +1,4 @@
+/** @implements {ITodoModel} */
 export class TodoModel {
   state = {
     title: '',

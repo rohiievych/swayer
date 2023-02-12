@@ -51,6 +51,10 @@ type SchemaChild<TModel extends Model> = SchemaValue<TModel>
 
 type SchemaProps = HTMLInputElement;
 
+type ContextProps = Required<{
+  [P in keyof SchemaProps]: SchemaProps[P];
+}>;
+
 type Props<State> = Partial<{
   [P in keyof SchemaProps]: SchemaProps[P] | Reaction<State, SchemaProps[P]>;
 }>;
@@ -65,23 +69,33 @@ interface Schema<TModel extends Model, State = TModel['state']> {
   props?: Props<State>;
   attrs?: Attrs<State> | Reaction<State, Attrs<State>>;
   model?: TModel;
-  events?: Events & ThisType<Component<TModel>>;
-  channels?: Channels & ThisType<Component<TModel>>;
-  hooks?: Partial<Hooks> & ThisType<Component<TModel>>;
+  events?: Events & ThisType<ContextAPI<TModel>>;
+  channels?: Channels & ThisType<ContextAPI<TModel>>;
+  hooks?: Partial<Hooks> & ThisType<ContextAPI<TModel>>;
   children?: SchemaChild<TModel>[] | Reaction<State, SchemaChild<TModel>[]>;
 }
 
 interface ChannelOptions<TModel extends Model> {
   scope?: MaybeArray<string>;
   select?: (
-    component: Component<TModel>,
+    contextAPI: ContextAPI<TModel>,
     index: number,
-    array: Component<TModel>[],
+    array: ContextAPI<TModel>[],
   ) => boolean;
 }
 
-interface Component<TModel extends Model>
-          extends Omit<Required<Schema<TModel>>, 'children'> {
+interface ContextAPI<TModel extends Model> {
+  tag: keyof HTMLElementTagNameMap;
+  text: BasicPrimitives;
+  classes: MaybeArray<string>;
+  styles: ContextStyles;
+  props: ContextProps;
+  attrs: ContextAttrs;
+  model: TModel;
+  events: Events & ThisType<ContextAPI<TModel>>;
+  channels: Channels & ThisType<ContextAPI<TModel>>;
+  hooks: Partial<Hooks> & ThisType<ContextAPI<TModel>>;
+
   moduleUrl: string;
   router: Router;
   emitEvent(name: string, data?): boolean;
@@ -101,11 +115,28 @@ type CSSPropsValue<State = UserObject> = Partial<
 type CSSProps<State> =
   CSSPropsValue<State> | Reaction<State, CSSPropsValue<State>>;
 
-type AttrValue<State> = BasicPrimitives | NullishPrimitives | CSSProps<State>;
+type ContextCSSProps = Partial<Record<
+  keyof CSSStyleDeclaration,
+  string | number
+>>;
+
+type AttrValue<State> = BasicPrimitives
+  | NullishPrimitives
+  | CSSProps<State>;
+
+type ContextAttrValue = BasicPrimitives
+  | NullishPrimitives
+  | ContextCSSProps;
 
 interface Attrs<State> {
   style?: CSSProps<State> | Reaction<State, CSSProps<State>>;
-  [attr: string]: AttrValue<State> | Reaction<State, AttrValue<State>>;
+  [attr: string]: AttrValue<State>
+    | Reaction<State, AttrValue<State>>;
+}
+
+interface ContextAttrs {
+  style?: ContextCSSProps;
+  [attr: string]: ContextAttrValue;
 }
 
 interface Events {
@@ -153,4 +184,9 @@ interface CssAnimation {
 interface Styles<State> extends PseudoStyles {
   animations?: CssAnimation[];
   compute?: MaybeArray<Reaction<State, CSSPropsValue>>;
+}
+
+interface ContextStyles extends PseudoStyles {
+  animations?: CssAnimation[];
+  compute?: MaybeArray<ContextCSSProps>;
 }

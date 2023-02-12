@@ -4,9 +4,8 @@ interface TodoState {
   completed?: boolean;
 }
 
-declare class TodoModel implements Model {
+interface ITodoModel extends Model<TodoState> {
   state: TodoState;
-  remove(): void;
   updateTitle(title: string): void;
   startEditing(): void;
   endEditing(): void;
@@ -22,10 +21,10 @@ interface TodosState {
   },
 }
 
-declare class TodosModel implements Model {
+interface ITodosModel extends Model<TodosState> {
   state: TodosState;
   addTodo(title: string): void;
-  removeTodo(todoModel: TodoModel): void;
+  removeTodo(index: number): void;
   clearCompleted(): void;
   calculateCounts(): void;
   save(): void;
