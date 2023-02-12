@@ -1,6 +1,6 @@
 import { TodosModel } from './todos.model.js';
 
-/** @type {Styles} */
+/** @type {Styles<TodosState>} */
 const containerStyles = {
   position: 'relative',
   background: 'white',
@@ -8,7 +8,7 @@ const containerStyles = {
               0 25px 50px 0 rgba(0, 0, 0, 0.1)`,
 };
 
-/** @returns {Schema<TodosModel>} */
+/** @returns {Schema<ITodosModel>} */
 export default () => {
   const todosModel = new TodosModel();
   return {

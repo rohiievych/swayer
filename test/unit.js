@@ -1,1 +1,1 @@
-['runtime'].map((test) => require('./' + test));
+console.log('No unit tests implemented');

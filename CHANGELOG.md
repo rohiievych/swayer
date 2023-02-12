@@ -9,6 +9,7 @@
 - Improve starter application
 - Write learning comments
 - Change Telegram links
+- Update types
 
 ## [1.0.0-alpha.1][] - 2023-02-11
 

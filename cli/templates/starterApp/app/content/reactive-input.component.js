@@ -2,7 +2,7 @@
 // state is a reactive data object, so put there only data,
 // which will be used in component reactions
 
-/** @implements {Model} */
+/** @implements {ITextModel} */
 class TextModel {
   #defaultText = 'I am truly reactive!';
   state = {
@@ -32,7 +32,7 @@ const inputStyles = {
   }),
 };
 
-/** @type {Schema} */
+/** @type {Schema<ITextModel>} */
 export default {
   tag: 'div',
   styles: { marginTop: '40px' },

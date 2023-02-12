@@ -11,7 +11,7 @@
   },
   "bugs": {
     "url": "https://github.com/metarhia/swayer/issues",
-    "email": "r.ogiyevich@gmail.com"
+    "email": "roman@swayer.dev"
   },
   "homepage": "https://metarhia.com",
   "funding": {
@@ -19,9 +19,8 @@
     "url": "https://www.patreon.com/rohiievych"
   },
   "scripts": {
-    "start": "swr serve"
-  },
-  "dependencies": {
-    "swayer": "file:../.."
+    "start": "swr serve",
+    "start:ssr": "swr serve --mode ssr",
+    "linkEngine": "npm link ../../"
   }
 }

@@ -1,19 +1,19 @@
 import { todoListStyles } from './list.styles.js';
 
-/** @returns {Schema<TodosModel>} */
+/** @returns {Schema<ITodosModel>} */
 export default (todosModel) => ({
   tag: 'ul',
   model: todosModel,
   styles: todoListStyles,
   events: {
     toggleComplete() {
-      todosModel.calculateCounts();
+      this.model.calculateCounts();
     },
     removeTodo({ detail: index }) {
-      todosModel.removeTodo(index);
+      this.model.removeTodo(index);
     },
     todoChange() {
-      todosModel.save();
+      this.model.save();
     },
   },
   children: ({ todos }) => todos.map((todo, index) => ({

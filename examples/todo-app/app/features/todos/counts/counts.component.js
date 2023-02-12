@@ -2,7 +2,7 @@ import { clearTodosButtonStyles, countsStyles } from './counts.styles.js';
 
 const getItemsText = (count) => (count === 1 ? 'item left' : 'items left');
 
-/** @type {Schema<TodosModel>} */
+/** @type {Schema<ITodosModel>} */
 const clearButton = {
   tag: 'button',
   text: 'Clear completed',
@@ -14,7 +14,7 @@ const clearButton = {
   },
 };
 
-/** @returns {Schema<TodosModel>} */
+/** @returns {Schema<ITodosModel>} */
 export default (todosModel) => ({
   tag: 'footer',
   model: todosModel,

@@ -1,5 +1,6 @@
 import Storage from '../../utils/storage.js';
 
+/** @implements {ITodosModel} */
 export class TodosModel {
   #storage = new Storage('swayer-todos');
   /** @type {TodosState} */
