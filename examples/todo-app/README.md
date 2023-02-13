@@ -7,4 +7,4 @@ npm i
 npm start
 ```
 
-## [See online demo](https://metarhia.github.io/swayer/examples/todo-app/)
+## [See online demo](https://rohiievych.github.io/swayer/examples/todo-app/)

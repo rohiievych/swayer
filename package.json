@@ -1,6 +1,6 @@
 {
   "name": "swayer",
-  "version": "1.0.0-alpha.2",
+  "version": "1.0.0-alpha.3",
   "description": "Schema based UI engine",
   "author": "Roman Ohiievych <roman@swayer.dev>",
   "license": "MIT",
@@ -20,13 +20,13 @@
   "readmeFilename": "README.md",
   "repository": {
     "type": "git",
-    "url": "https://github.com/metarhia/swayer"
+    "url": "https://github.com/rohiievych/swayer"
   },
   "bugs": {
-    "url": "https://github.com/metarhia/swayer/issues",
+    "url": "https://github.com/rohiievych/swayer/issues",
     "email": "roman@swayer.dev"
   },
-  "homepage": "https://metarhia.com",
+  "homepage": "https://swayer.dev",
   "funding": {
     "type": "patreon",
     "url": "https://www.patreon.com/rohiievych"
