@@ -22,5 +22,8 @@
     "start": "swr serve",
     "start:ssr": "swr serve --mode ssr",
     "linkEngine": "npm link ../../"
+  },
+  "dependencies": {
+    "swayer": "latest"
   }
 }
