@@ -12,6 +12,7 @@ const FILE_TYPES = {
   js: 'text/javascript',
   json: 'application/json',
   ico: 'image/x-icon',
+  webp: 'image/webp',
   png: 'image/png',
   jpg: 'image/jpg',
   svg: 'image/svg+xml',

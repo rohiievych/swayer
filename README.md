@@ -6,7 +6,7 @@
 [![snyk](https://snyk.io/test/github/rohiievych/swayer/badge.svg)](https://snyk.io/test/github/rohiievych/swayer)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/rohiievych/swayer/blob/main/LICENSE)
 
-**Comprehensive UI engine** for fast and low overhead JavaScript development
+**JavaScript-only UI engine** for fast and low overhead development
 
 ## Before we begin
 
@@ -99,11 +99,11 @@ You simply don't need to use different CSS-like syntax with Swayer. JavaScript i
   - Routing
   - Lifecycle hooks
 - #### Styling
+  - Computed styles
+  - Sharable style rules
   - CSS selector abstraction
   - Extended property syntax
-  - Sharable style rules
   - Animations
-  - Data binding
 - #### Communication
   - Events: bottom-up system or custom events
   - Channels: scoped cross-component messages
@@ -119,162 +119,72 @@ You simply don't need to use different CSS-like syntax with Swayer. JavaScript i
 
 ## Code examples
 
-Simple head component:
+Simple component describing a paragraph with text:
 
 ```js
-// Schema factory returning a component schema
-// title is passed as input from other schemas
-/** @returns {Schema} */
-export default (title) => ({
-  tag: 'head',
-  // Children define component structure,
-  // keep it readably flat and avoid high level of nesting
-  children: [
-    {
-      tag: 'title',
-      text: title,
-    },
-    {
-      tag: 'link',
-      attrs: {
-        rel: 'icon',
-        type: 'image/png',
-        href: '/assets/favicon.png',
-      },
-    },
-    {
-      tag: 'meta',
-      attrs: {
-        charset: 'utf-8',
-      },
-    },
-    {
-      tag: 'meta',
-      attrs: {
-        name: 'viewport',
-        content: 'width=device-width, initial-scale=1.0',
-      },
-    },
-  ],
-});
-```
-
-Advanced component with model and reactive state:
-
-```js
-// Use ES6 modules
-import { TodosModel } from './todos.model.js';
-
-/** @type {Styles} */
-const containerStyles = {
-  // Styles are written in JavaScript: no selectors, fully sharable
-  position: 'relative',
-  background: 'white',
-  boxShadow: `0 2px 4px 0 rgba(0, 0, 0, 0.2),
-              0 25px 50px 0 rgba(0, 0, 0, 0.1)`,
-};
-
-// Schema factory returning a component schema
-/** @returns {Schema<TodosModel>} */
-export default () => {
-  // Using models you can better separate you business logic
-  const todosModel = new TodosModel();
-  return {
-    tag: 'main',
-    styles: containerStyles,
-    model: todosModel,
-    children: [
-      {
-        // Namespaced schema reference
-        path: '@todos/input/input.component',
-        input: todosModel,
-      },
-      // Reaction is run on todosModel.state.show change
-      // This is how you update the view in declarative way,
-      // so forget about direct DOM access
-      ({ show }) => show && [
-        {
-          path: `@todos/list/list.component`,
-          input: todosModel,
-        },
-        {
-          path: `@todos/counts/counts.component`,
-          input: todosModel,
-        },
-      ],
-    ],
-  };
+/** @type {Schema} */
+export default {
+  tag: 'p',
+  text: 'Hello World!',
 };
 ```
 
+Advanced component describing how text is being reflected in a paragraph while typing in a text input:
+
 ```js
-import Storage from '../../utils/storage.js';
-
-// Models hold your data store and its mutations,
-// so that you can keep your components clear and readable
-export class TodosModel {
-  #storage = new Storage('swayer-todos');
-
-  // State is mandatory model property,
-  // keep reactive data here and bind it in components via reactions
-  /** @type {TodosState} */
+/** @implements {ITextModel} */
+class TextModel {
+  #defaultText = 'I am truly reactive!';
   state = {
-    show: false,
-    todos: [],
-    counts: {
-      completed: 0,
-      remaining: 0,
-    },
+    text: this.#defaultText,
   };
 
-  constructor() {
-    this.#load();
-    this.#updateVisibility();
-    this.calculateCounts();
-  }
-
-  addTodo(title) {
-    const data = { title, editing: false, completed: false };
-    this.state.todos.push(data);
-    this.#handleChanges();
-  }
-
-  removeTodo(index) {
-    this.state.todos.splice(index, 1);
-    this.#handleChanges();
-  }
-
-  clearCompleted() {
-    const todos = this.state.todos;
-    this.state.todos = todos.filter(({ completed }) => !completed);
-    this.#handleChanges();
-  }
-
-  calculateCounts() {
-    const todos = this.state.todos;
-    const completed = todos.filter(({ completed }) => completed).length;
-    const remaining = todos.length - completed;
-    this.state.counts = { completed, remaining };
-  }
-
-  save() {
-    this.#storage.save(this.state.todos);
-  }
-
-  #load() {
-    this.state.todos = this.#storage.retrieve();
-  }
-
-  #handleChanges() {
-    this.#updateVisibility();
-    this.calculateCounts();
-    this.save();
-  }
-
-  #updateVisibility() {
-    this.state.show = this.state.todos.length > 0;
+  update(text) {
+    this.state.text = text || this.#defaultText;
   }
 }
+
+/** @type {Styles} */
+const inputStyles = {
+  padding: '8px 14px',
+  fontSize: '14px',
+  borderRadius: '5px',
+  outline: 'none',
+  border: 'none',
+  boxShadow: '0 0 5px 0 #bababa',
+  transition: 'box-shadow 0.1s ease',
+  compute: (state) => ({
+    boxShadow: `0 0 ${state.text.length}px 0 #bababa`,
+  }),
+};
+
+/** @type {Schema<ITextModel>} */
+export default {
+  tag: 'div',
+  styles: { marginTop: '40px' },
+  model: new TextModel(),
+  children: [
+    {
+      tag: 'input',
+      styles: inputStyles,
+      attrs: {
+        type: 'text',
+        placeholder: 'Type something here...',
+      },
+      events: {
+        input() {
+          const value = this.props.value;
+          this.model.update(value);
+        },
+      },
+    },
+    {
+      tag: 'p',
+      styles: { fontWeight: 600 },
+      text: (state) => state.text,
+    },
+  ],
+};
 ```
 
 ## Swayer documentation
@@ -1328,4 +1238,4 @@ See GitHub for full [contributors list](https://github.com/rohiievych/swayer/gra
 Swayer framework is [MIT licensed](./LICENSE).<br>
 Original author: &lt;roman@swayer.dev&gt;<br>
 
-Totally made in Ukraine 🇺🇦
+**Totally made in Ukraine** :ukraine:

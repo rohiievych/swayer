@@ -49,7 +49,7 @@ export default {
           tag: 'a',
           styles: linkStyles,
           attrs: {
-            href: 'https://github.com/metarhia/swayer',
+            href: 'https://github.com/rohiievych/swayer',
             target: '_blank',
             rel: 'noopener',
           },
