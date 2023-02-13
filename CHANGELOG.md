@@ -2,6 +2,10 @@
 
 ## [Unreleased][unreleased]
 
+### Added
+
+- GitHub Pages todo-app workflow
+
 ## [1.0.0-alpha.3][] - 2023-02-13
 
 ### Changed

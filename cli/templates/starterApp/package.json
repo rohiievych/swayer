@@ -1,6 +1,6 @@
 {
   "name": "swayer-starter-app",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Initial Swayer application",
   "type": "module",
   "types": "types/index.d.ts",
@@ -14,7 +14,7 @@
     "fix": "npm run lint -- --fix"
   },
   "dependencies": {
-    "swayer": "^1.0.0-alpha.2"
+    "swayer": "^1.0.0-alpha.3"
   },
   "devDependencies": {
     "@types/node": "^18.13.0",
