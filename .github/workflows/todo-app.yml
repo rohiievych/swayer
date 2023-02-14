@@ -37,7 +37,7 @@ jobs:
         with:
           node-version: "18"
           cache: npm
-          cache-dependency-path: ${{ env.BUILD_PATH }}/package-lock.json
+          cache-dependency-path: ${{ env.BUILD_PATH }}/package.json
       - name: Setup Pages
         id: pages
         uses: actions/configure-pages@v3
