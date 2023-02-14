@@ -24,6 +24,6 @@
     "linkEngine": "npm link ../../"
   },
   "dependencies": {
-    "swayer": "latest"
+    "swayer": "github:rohiievych/swayer"
   }
 }
