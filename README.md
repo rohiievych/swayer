@@ -45,7 +45,7 @@ npm start
 
 ## Showcase
 
-- See online [Todo Application demo](https://rohiievych.github.io/swayer/examples/todo-app)
+- See online [Todo Application demo](https://rohiievych.github.io/swayer/todo-app)
 - Play with [example](https://github.com/rohiievych/swayer/tree/main/examples/todo-app) code to investigate how it works
 
 ## Contacts
