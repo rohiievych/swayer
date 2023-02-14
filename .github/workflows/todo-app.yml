@@ -21,7 +21,8 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  BUILD_PATH: "./examples/todo-app"
+  BUILD_PATH: "examples/todo-app"
+  BASE_PATH: "swayer/examples/todo-app"
 
 jobs:
   build:
@@ -43,7 +44,9 @@ jobs:
         run: npm ci
         working-directory: ${{ env.BUILD_PATH }}
       - name: Build with Swayer
-        run: npx swr build --prod && npx swr r dist/main.js -o dist/index.html -m ssr
+        run: |
+          npx swr build --prod
+          npx swr r dist/main.js -o dist/index.html -m ssr -bP ${{ env.BASE_PATH }}
         working-directory: ${{ env.BUILD_PATH }}
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
@@ -53,7 +56,7 @@ jobs:
   deploy:
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url }}${{ env.BUILD_PATH }}
     needs: build
     runs-on: ubuntu-latest
     name: Deploy

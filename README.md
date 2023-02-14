@@ -45,7 +45,7 @@ npm start
 
 ## Showcase
 
-- See online [Todo Application demo](https://rohiievych.github.io/swayer/examples/todo-app/)
+- See online [Todo Application demo](https://rohiievych.github.io/swayer/examples/todo-app)
 - Play with [example](https://github.com/rohiievych/swayer/tree/main/examples/todo-app) code to investigate how it works
 
 ## Contacts
@@ -1238,4 +1238,4 @@ See GitHub for full [contributors list](https://github.com/rohiievych/swayer/gra
 Swayer framework is [MIT licensed](./LICENSE).<br>
 Original author: &lt;roman@swayer.dev&gt;<br>
 
-**Totally made in Ukraine** :ukraine:
+**Totally made in Ukraine** 🇺🇦

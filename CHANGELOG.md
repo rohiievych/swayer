@@ -6,6 +6,19 @@
 
 - GitHub Pages todo-app workflow
 
+### Added
+
+- basePath CLI option
+- GitHub Pages todo-app workflow
+
+### Changed
+
+- Replace source /node_modules/swayer path with JSPM CDN url
+
+### Removed
+
+- Deprecate node_modules for build in favor of future CDN native import maps
+
 ## [1.0.0-alpha.3][] - 2023-02-13
 
 ### Changed

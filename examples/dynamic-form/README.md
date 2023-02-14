@@ -6,5 +6,3 @@
 npm i
 npm start
 ```
-
-## [See online demo](https://rohiievych.github.io/swayer/examples/dynamic-form/)
