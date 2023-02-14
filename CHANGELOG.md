@@ -2,14 +2,13 @@
 
 ## [Unreleased][unreleased]
 
-### Added
-
-- GitHub Pages todo-app workflow
+## [1.0.0-alpha.4][] - 2023-02-14
 
 ### Added
 
-- basePath CLI option
-- GitHub Pages todo-app workflow
+- New basePath CLI option
+- Base URI module resolution
+- GitHub Pages todo-app workflow for online demo
 
 ### Changed
 
@@ -17,7 +16,7 @@
 
 ### Removed
 
-- Deprecate node_modules for build in favor of future CDN native import maps
+- Deprecate node_modules for frontend build
 
 ## [1.0.0-alpha.3][] - 2023-02-13
 
@@ -42,7 +41,8 @@
 
 - Implement initial engine features
 
-[unreleased]: https://github.com/rohiievych/swayer/compare/v1.0.0-alpha.3...HEAD
+[unreleased]: https://github.com/rohiievych/swayer/compare/v1.0.0-alpha.4...HEAD
+[1.0.0-alpha.4]: https://github.com/rohiievych/swayer/compare/v1.0.0-alpha.3...v1.0.0-alpha.4
 [1.0.0-alpha.3]: https://github.com/rohiievych/swayer/compare/v1.0.0-alpha.2...v1.0.0-alpha.3
 [1.0.0-alpha.2]: https://github.com/rohiievych/swayer/compare/v1.0.0-alpha.1...v1.0.0-alpha.2
 [1.0.0-alpha.1]: https://github.com/rohiievych/swayer/releases/tag/v1.0.0-alpha.1

@@ -1,6 +1,6 @@
 {
   "name": "swayer",
-  "version": "1.0.0-alpha.3",
+  "version": "1.0.0-alpha.4",
   "description": "Schema based UI engine",
   "author": "Roman Ohiievych <roman@swayer.dev>",
   "license": "MIT",
@@ -11,8 +11,10 @@
     "scalable",
     "web",
     "UI",
-    "framework",
-    "engine"
+    "engine",
+    "JavaScript-only",
+    "consistent",
+    "reactive"
   ],
   "main": "index.js",
   "type": "module",
@@ -53,8 +55,8 @@
   },
   "devDependencies": {
     "@types/node": "^18.13.0",
-    "@typescript-eslint/eslint-plugin": "^5.51.0",
-    "@typescript-eslint/parser": "^5.51.0",
+    "@typescript-eslint/eslint-plugin": "^5.52.0",
+    "@typescript-eslint/parser": "^5.52.0",
     "eslint": "^8.34.0",
     "eslint-config-metarhia": "^8.1.0",
     "globals": "^13.20.0",
