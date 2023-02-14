@@ -177,7 +177,6 @@ const commands = {
     aliases: ['s'],
     description: 'Serve Swayer application.',
     options: {
-      ...sharedOptions.basePath,
       ...sharedOptions.mode,
       ...sharedOptions.input,
       '--host': {
