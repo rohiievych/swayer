@@ -1,6 +1,6 @@
 {
   "name": "swayer-starter-app",
-  "version": "1.1.2",
+  "version": "1.1.3",
   "description": "Initial Swayer application",
   "type": "module",
   "types": "types/index.d.ts",
@@ -14,12 +14,12 @@
     "fix": "npm run lint -- --fix"
   },
   "dependencies": {
-    "swayer": "^1.0.0-alpha.3"
+    "swayer": "^1.0.0-alpha.4"
   },
   "devDependencies": {
     "@types/node": "^18.13.0",
-    "@typescript-eslint/eslint-plugin": "^5.51.0",
-    "@typescript-eslint/parser": "^5.51.0",
+    "@typescript-eslint/eslint-plugin": "^5.52.0",
+    "@typescript-eslint/parser": "^5.52.0",
     "eslint": "^8.34.0",
     "globals": "^13.20.0",
     "typescript": "^4.9.5"
