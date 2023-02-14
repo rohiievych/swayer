@@ -25,16 +25,10 @@ const OUTPUT_DIR = 'dist';
 
 const ENV_DIR = 'environments';
 
-const PACKAGE_FILES = [
-  'package.json',
-  'package-lock.json',
-];
-
 const BUILD_FILES = [
   'app',
   'assets',
   ENTRY_FILE_NAME,
-  ...PACKAGE_FILES,
 ];
 
 const TERSER_OPTIONS = {
@@ -59,9 +53,10 @@ export default class Builder {
     const buildFiles = BUILD_FILES.map((path) => join(srcDir, path));
     const filter = (src) => buildFiles.some((name) => src.startsWith(name));
     await this.#copyDir(srcDir, outputDir, { filter, isProd });
-    await this.#copyEnv(srcDir, outputDir, env);
-    await this.#runCommand('npm ci --omit=dev', outputDir);
-    await this.#cleanFilesFromDir(PACKAGE_FILES, outputDir);
+    await this.#copyEnv(srcDir, outputDir, { env, isProd });
+    // Probably deprecated
+    // await this.#runCommand('npm ci --omit=dev', outputDir);
+    // await this.#cleanFilesFromDir(PACKAGE_FILES, outputDir);
   }
 
   async render(options) {
@@ -74,7 +69,7 @@ export default class Builder {
   }
 
   async createSPAPage(options) {
-    const { path = './', title, lang  } = options;
+    const { path = './', title, lang } = options;
     const fullOutputPath = resolve(path, SPA_INDEX);
     const content = this.#platform.createSPA(title, lang);
     await fsp.writeFile(fullOutputPath, content);
@@ -88,13 +83,14 @@ export default class Builder {
     await this.#runCommand('npm i', destDir);
   }
 
-  async #copyEnv(srcDir, destDir, env = 'development') {
+  async #copyEnv(srcDir, destDir, options) {
     const envDirPath = join(srcDir, ENV_DIR);
     try {
       await fsp.access(envDirPath);
     } catch {
       return;
     }
+    const { env = 'development', isProd } = options;
     const dirents = await fsp.readdir(envDirPath);
     const envFile = dirents.find((name) => {
       const middleExt = extname(basename(name, '.js')).slice(1);
@@ -103,7 +99,8 @@ export default class Builder {
     if (!envFile) throw Reporter.error('EnvNotFound', { env, dir: envDirPath });
     const srcPath = join(envDirPath, envFile);
     const destPath = join(destDir, ENV_FILE_NAME);
-    await fsp.copyFile(srcPath, destPath);
+    if (isProd) await this.#writeMinified(srcPath, destPath);
+    else await fsp.copyFile(srcPath, destPath);
   }
 
   async #runCommand(command, cwd) {

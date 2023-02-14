@@ -7,7 +7,7 @@ import ServerPlatform from '../lib/platforms/server.js';
 import Reporter from '../lib/reporter.js';
 
 const FILE_TYPES = {
-  html: 'text/html',
+  html: 'text/html; charset=UTF-8',
   css: 'text/css',
   js: 'text/javascript',
   json: 'application/json',

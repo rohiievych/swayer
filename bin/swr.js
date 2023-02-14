@@ -21,15 +21,26 @@ const measure = async (fn) => {
 /*
 * Define CLI commands with options and arguments
 * */
-const renderOptions = {
-  '--input': {
-    aliases: ['-i'],
-    description: 'Pass component input data as JSON string.',
-    parseAsJson: true,
+
+const sharedOptions = {
+  basePath: {
+    '--basePath': {
+      aliases: ['-bP'],
+      description: 'Set application base path. Defaults to /.',
+    },
   },
-  '--mode': {
-    aliases: ['-m'],
-    description: 'Set rendering mode: csr or ssr. Defaults to csr.',
+  mode: {
+    '--mode': {
+      aliases: ['-m'],
+      description: 'Set rendering mode: csr or ssr. Defaults to csr.',
+    },
+  },
+  input: {
+    '--input': {
+      aliases: ['-i'],
+      description: 'Pass component input data as JSON string.',
+      parseAsJson: true,
+    },
   },
 };
 
@@ -78,12 +89,12 @@ const commands = {
         'Defaults to current directory.',
       },
     ],
-    execute: async ({ mode, ...buildOptions }) => {
+    execute: async (buildOptions) => {
       console.log(colors.green('\nBuilding Swayer application...\n'));
       const ms = await measure(
         async () => {
           if (buildOptions.production) buildOptions.env = 'production';
-          await new Builder({ mode }).build(buildOptions);
+          await new Builder().build(buildOptions);
         },
       );
       console.log(colors.green(`\nDone in ${ms}`));
@@ -92,6 +103,7 @@ const commands = {
   spa: {
     description: 'Create single page application.',
     options: {
+      ...sharedOptions.basePath,
       '--title': {
         aliases: ['-t'],
         description: 'SPA index page title.',
@@ -108,11 +120,12 @@ const commands = {
           'Defaults to current directory.',
       },
     ],
-    execute: async ({ ...spaOptions }) => {
+    execute: async ({ basePath, ...spaOptions }) => {
       const startMsg = '\nCreating Swayer single page application...\n';
       console.log(colors.green(startMsg));
+      const platformOptions = { basePath };
       const ms = await measure(
-        () => new Builder().createSPAPage(spaOptions),
+        () => new Builder(platformOptions).createSPAPage(spaOptions),
       );
       console.log(colors.green(`\nDone in ${ms}`));
     },
@@ -121,7 +134,9 @@ const commands = {
     aliases: ['r'],
     description: 'Render Swayer component.',
     options: {
-      ...renderOptions,
+      ...sharedOptions.basePath,
+      ...sharedOptions.mode,
+      ...sharedOptions.input,
       '--route': {
         aliases: ['-r'],
         description: 'Path to be routed inside Swayer components. ' +
@@ -144,15 +159,16 @@ const commands = {
         description: 'Path to component schema file.',
       },
     ],
-    execute: async ({ mode, ...renderOptions }) => {
+    execute: async ({ mode, basePath, ...renderOptions }) => {
       if (!renderOptions.path) {
         const msg = '\nError: path to component schema file is not provided!';
         console.log(colors.red(msg));
         return;
       }
+      const platformOptions = { mode, basePath };
       console.log(colors.green('\nRendering Swayer component...\n'));
       const ms = await measure(
-        () => new Builder({ mode }).render(renderOptions),
+        () => new Builder(platformOptions).render(renderOptions),
       );
       console.log(colors.green(`\nDone in ${ms}`));
     },
@@ -161,7 +177,9 @@ const commands = {
     aliases: ['s'],
     description: 'Serve Swayer application.',
     options: {
-      ...renderOptions,
+      ...sharedOptions.basePath,
+      ...sharedOptions.mode,
+      ...sharedOptions.input,
       '--host': {
         aliases: ['-h'],
         description: `Set server host. Defaults to '127.0.0.1'.`,
@@ -178,10 +196,11 @@ const commands = {
         'Defaults to current directory.',
       },
     ],
-    execute: ({ mode, ...serverOptions }) => {
+    execute: ({ mode, basePath, ...serverOptions }) => {
       console.log(colors.green('\nWelcome to Swayer http server!'));
       console.log('\n-- DO NOT USE IN PRODUCTION --\n');
-      return new HttpServer({ mode }).start(serverOptions);
+      const platformOptions = { mode, basePath };
+      return new HttpServer(platformOptions).start(serverOptions);
     },
   },
 };
