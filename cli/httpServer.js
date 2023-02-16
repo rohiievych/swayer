@@ -30,33 +30,37 @@ const getDate = () => new Date().toISOString();
 export default class HttpServer {
   #platform;
 
-  constructor(platformOptions = {}) {
-    this.#platform = new ServerPlatform(platformOptions);
+  constructor() {
+    this.#platform = new ServerPlatform();
   }
 
   async start(options) {
-    const { path = './', input } = options;
+    const { path = './' } = options;
     const servePath = resolve(path);
     const baseStats = await fsp.lstat(servePath);
     if (!baseStats.isDirectory()) {
       throw Reporter.error('InvalidDirPath', servePath);
     }
     const server = http.createServer(async (req, res) => {
-      const routingPath = String(req.url);
+      const routePath = String(req.url);
       try {
         res.statusCode = 200;
-        if (routingPath.includes('.')) {
-          const safeSuffix = normalize(routingPath).replace(UNSAFE_PATH, '');
+        if (routePath.includes('.')) {
+          const safeSuffix = normalize(routePath).replace(UNSAFE_PATH, '');
           const filePath = join(servePath, safeSuffix);
           await fsp.access(filePath);
           const type = getType(filePath);
           res.setHeader('Content-Type', type);
           createReadStream(filePath).pipe(res);
         } else {
-          const entryPath = join(servePath, ENTRY_FILE_NAME);
-          const content = await this.#platform.render(
-            entryPath, input, routingPath,
-          );
+          const { basePath = '/', enginePath, input, mode } = options;
+          const entryPath = join(servePath, basePath, ENTRY_FILE_NAME);
+          const renderOptions = {
+            entryPath, routePath,
+            basePath, enginePath,
+            input, mode,
+          };
+          const content = await this.#platform.render(renderOptions);
           res.setHeader('Content-Type', FILE_TYPES.html);
           res.end(content);
         }

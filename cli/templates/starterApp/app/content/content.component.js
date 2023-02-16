@@ -11,11 +11,11 @@ const contentData = {
       url: 'https://github.com/rohiievych/swayer/tree/main/examples/todo-app',
     },
     {
-      icon: '/assets/icons/github.png',
+      icon: 'assets/icons/github.png',
       url: 'https://github.com/rohiievych/swayer',
     },
     {
-      icon: '/assets/icons/patreon.png',
+      icon: 'assets/icons/patreon.png',
       url: 'https://patreon.com/rohiievych',
     },
   ],

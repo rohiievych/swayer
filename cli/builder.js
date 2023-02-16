@@ -42,8 +42,8 @@ const TERSER_OPTIONS = {
 export default class Builder {
   #platform;
 
-  constructor(platformOptions = {}) {
-    this.#platform = new ServerPlatform(platformOptions);
+  constructor() {
+    this.#platform = new ServerPlatform();
   }
 
   async build(options) {
@@ -60,22 +60,31 @@ export default class Builder {
   }
 
   async render(options) {
-    const { path, input, output, route, pretty } = options;
-    const outputPath = output ? output : path.replace('.js', '.html');
+    const {
+      path: entryPath, route: routePath, input, output,
+      basePath, enginePath, pretty, mode,
+    } = options;
+    const renderOptions = {
+      entryPath, routePath,
+      basePath, enginePath,
+      input, mode,
+    };
+    const outputPath = output ? output : entryPath.replace('.js', '.html');
     const fullOutputPath = resolve(outputPath);
-    let content = await this.#platform.render(path, input, route);
+    let content = await this.#platform.render(renderOptions);
     if (pretty) content = prettifyHTML(content);
     await fsp.writeFile(fullOutputPath, content);
   }
 
   async createSPAPage(options) {
-    const { path = './', title, lang } = options;
+    const { path = './', ...pageOptions } = options;
     const fullOutputPath = resolve(path, SPA_INDEX);
-    const content = this.#platform.createSPA(title, lang);
+    const content = this.#platform.createSPA(pageOptions);
     await fsp.writeFile(fullOutputPath, content);
   }
 
-  async createStarter(name) {
+  async createStarter(options) {
+    const { name } = options;
     const currentDir = dirname(fileURLToPath(import.meta.url));
     const templateDir = join(currentDir, 'templates', 'starterApp');
     const destDir = resolve(name);
