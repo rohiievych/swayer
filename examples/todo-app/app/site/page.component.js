@@ -56,14 +56,21 @@ export default ({ locale }) => {
             pattern: [':id', 'todos/:id'],
             schema: (params) => createPage(
               `Todo #${params.id}`,
-              `Hey, this is todo '${params.id}'`,
+              {
+                path: '@todo/todo-details.component',
+                input: { index: +params.id - 1 },
+              },
             ),
           },
           {
             pattern: '**',
             schema: createPage(
               '404',
-              'Page not found',
+              {
+                tag: 'h2',
+                styles: { textAlign: 'center' },
+                text: 'Page not found',
+              },
             ),
           },
         ],

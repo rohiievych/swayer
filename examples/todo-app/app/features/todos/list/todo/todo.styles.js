@@ -10,7 +10,7 @@ export const todoStyles = {
 /** @type {Styles} */
 export const todoTitleStyles = {
   wordBreak: 'break-all',
-  padding: '15px 50px 15px 60px',
+  padding: '15px 150px 15px 60px',
   display: 'block',
   lineHeight: 1.2,
   transition: 'color 0.1s ease',
@@ -45,6 +45,42 @@ export const todoToggleStyles = {
 };
 
 /** @type {Styles} */
+const navigateBtnStyles = {
+  display: 'inline-flex',
+  alignItems: 'center',
+  backgroundColor: 'white',
+  padding: '10px',
+  boxShadow: '0 0 5px 0 #bababa',
+  borderRadius: '5px',
+  textDecoration: 'none',
+  color: '#2d2c2c',
+  transition: 'all 0.15s ease',
+  border: 'none',
+  cursor: 'pointer',
+};
+
+/** @type {Styles} */
+export const openTodoBtnStyles = {
+  position: 'absolute',
+  top: 'calc(50% - 16px)',
+  right: '62px',
+  height: '32px',
+  opacity: 0.4,
+  hover: {
+    opacity: 1,
+  },
+  ...navigateBtnStyles,
+};
+
+/** @type {Styles} */
+export const backToListBtnStyles = {
+  ...navigateBtnStyles,
+  hover: {
+    boxShadow: '0 5px 15px 3px #bababa',
+  },
+};
+
+/** @type {Styles} */
 export const removeTodoButtonStyles = {
   display: 'flex',
   alignItems: 'center',
@@ -59,13 +95,13 @@ export const removeTodoButtonStyles = {
   background: 'none',
   border: 'none',
   cursor: 'pointer',
-  opacity: 0,
+  opacity: 0.2,
   animations: [
     {
       name: 'fadeIn',
       keyframes: {
         'from': {
-          opacity: 0,
+          opacity: 0.2,
         },
         '50%': {
           opacity: 0.5,
@@ -85,13 +121,12 @@ export const removeTodoButtonStyles = {
           opacity: 0.5,
         },
         'to': {
-          opacity: 0,
+          opacity: 0.2,
         },
       },
     },
   ],
   compute: [
-    () => ({ boxSizing: 'border-box' }),
     ({ buttonAnimation }) => {
       let animation;
       switch (buttonAnimation) {
@@ -110,7 +145,7 @@ export const editTodoStyles = {
   top: '0px',
   bottom: '0px',
   zIndex: 1,
-  width: '100%',
+  width: '72%',
   padding: '6px 6px 6px 60px',
   border: 'none',
   outline: 'none',

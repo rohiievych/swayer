@@ -1,6 +1,7 @@
 import { TodoModel } from './todo.model.js';
 import {
   editTodoStyles,
+  openTodoBtnStyles,
   removeTodoButtonStyles,
   todoStyles,
   todoTitleStyles,
@@ -105,16 +106,23 @@ const removeTodoBtn = (index) => {
   };
 };
 
+/** @returns {Schema} */
+const navigateTodoBtn = (index) => ({
+  tag: 'button',
+  text: 'Open todo',
+  styles: openTodoBtnStyles,
+  events: {
+    click() {
+      this.router.go(`/todos/${index + 1}`);
+    },
+  },
+});
+
 /** @returns {Schema<TodoModel>} */
 export default ({ todo, index }) => ({
   tag: 'li',
   styles: todoStyles,
   model: new TodoModel(todo),
-  events: {
-    click() {
-      this.router.go('todos/2');
-    },
-  },
   children: [
     {
       tag: 'div',
@@ -122,6 +130,7 @@ export default ({ todo, index }) => ({
       children: [
         todoToggle,
         todoLabel,
+        navigateTodoBtn(index),
         removeTodoBtn(index),
         ({ editing }) => editing && editInput,
       ],

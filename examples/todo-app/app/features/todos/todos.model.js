@@ -1,8 +1,7 @@
-import Storage from '../../utils/storage.js';
+import todosService from './todos.service.js';
 
 /** @implements {ITodosModel} */
 export class TodosModel {
-  #storage = new Storage('swayer-todos');
   /** @type {TodosState} */
   state = {
     show: false,
@@ -44,11 +43,11 @@ export class TodosModel {
   }
 
   save() {
-    this.#storage.save(this.state.todos);
+    todosService.saveAllTodos(this.state.todos);
   }
 
   #load() {
-    this.state.todos = this.#storage.retrieve();
+    this.state.todos = todosService.getAllTodos();
   }
 
   #handleChanges() {
