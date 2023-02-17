@@ -4,7 +4,7 @@ const locales = {
 };
 
 /** @returns {ComponentRef} */
-const createPageComponent = (locale = locales.uk) => ({
+const createPageComponent = (locale = locales.en) => ({
   path: '@site/page.component',
   input: { locale },
 });
@@ -14,6 +14,7 @@ export default {
   namespaces: {
     '@site': 'app/site',
     '@todos': 'app/features/todos',
+    '@todo': 'app/features/todos/list/todo',
   },
   preload: [
     '@site/head.component',

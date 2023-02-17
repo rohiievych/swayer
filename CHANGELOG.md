@@ -2,6 +2,10 @@
 
 ## [Unreleased][unreleased]
 
+### Changed
+
+- Update todo-app
+
 ## [1.0.0-alpha.5][] - 2023-02-17
 
 ### Added
