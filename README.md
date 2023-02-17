@@ -25,16 +25,16 @@ My home country has been ruined by terrible war started by Russian Federation. T
 
 ## Quick start
 
-Install Swayer CLI
+Install starter project with Swayer CLI
 
 ```shell
-npm i -g swayer
+npx swayer create mySwayerProject
 ```
 
-Create starter project with Swayer CLI
+Change directory to newly created project
 
 ```shell
-swr create mySwayerProject && cd mySwayerProject
+cd mySwayerProject
 ```
 
 Start application
@@ -186,6 +186,50 @@ export default {
   ],
 };
 ```
+
+## CLI usage
+
+Almost all commands and options have short aliases, so use `npx swr --help` to see available commands and `npx swr [command] --help` to see specific command options. Look up the following sections to learn the most useful CLI cases. If you don't want to call `npx` all the time, you have to install the CLI globally: `npm i -g swayer`.
+
+`swr` - the name of CLI, shortened version of swayer word.
+
+**Serve app with HTTP server:**
+
+`npx swr serve` - serves the app in default client side rendering mode. In this case server renders only the valid HTML page boilerplate (html, head, title, body) and the body content is rendered in a browser. This command is typically used for development.
+
+`npx swr serve --mode ssr` - serves the app in server side rendering mode. In this case the whole page is rendered by the server including page body content, routing tree and ready hooks, which are awaited if async. A browser performs the invisible hydration to bind all schemas to HTML and make it dynamic.
+
+`npx swr serve someDir` - serves the project directory containing `main.js`.
+
+See `npx swr serve --help` for more command options.
+
+**Build project:**
+
+`npx swr build` - prepares public build. By default, the application files will be placed in the default `dist` directory.
+
+`npx swr build --production` - prepares public build with additional source optimizations.
+
+`npx swr build --output outDir` - builds the project into a specific output folder.
+
+See `npx swr build --help` for more command options.
+
+**Prerender HTML for multi page app:**
+
+`npx swr render main.js --output index.html` - consumes a schema component and outputs HTML. For now only root schema in `main.js` is available for this command.
+
+`npx swr render main.js -o index.html --route /page/one` - renders different HTML pages based on the `route` option. This is the way how the multipage app can be created: just change `--output` and `--route` options for each page.
+
+Note 1: `render` command also has `--mode` option, so consider it as the CLI version of the Swayer HTTP server functionality for rendering components.
+
+Note 2: rendered HTML pages are usually made in a build output directory (`dist` by default), so that any web server like Nginx can serve this artifact. Keep in mind - `build` command does not render any component by default.
+
+See `npx swr render --help` for more command options.
+
+**Create SPA:**
+
+`npx swr spa` - creates a single `index.html` page to be used as an entry point for a single page application. This page should be served on any requested route and the engine router will do the rest.
+
+See `npx swr spa --help` for more command options.
 
 ## Swayer documentation
 
