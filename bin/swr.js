@@ -29,6 +29,13 @@ const sharedOptions = {
       description: 'Set application base path. Defaults to /.',
     },
   },
+  enginePath: {
+    '--enginePath': {
+      aliases: ['-eP'],
+      description: 'Specify the path to Swayer engine. ' +
+        'Defaults to latest version from jspm cdn.',
+    },
+  },
   mode: {
     '--mode': {
       aliases: ['-m'],
@@ -55,10 +62,15 @@ const commands = {
         description: 'New application name.',
       },
     ],
-    execute: async ({ name }) => {
+    execute: async (options) => {
+      if (!options.name) {
+        const msg = '\nError: application name is not provided!';
+        console.log(colors.red(msg));
+        return;
+      }
       console.log(colors.green('\nCreating new Swayer application...\n'));
       const ms = await measure(
-        () => new Builder().createStarter(name),
+        () => new Builder().createStarter(options),
       );
       console.log(colors.green(`\nDone in ${ms}`));
     },
@@ -89,12 +101,12 @@ const commands = {
         'Defaults to current directory.',
       },
     ],
-    execute: async (buildOptions) => {
+    execute: async (options) => {
       console.log(colors.green('\nBuilding Swayer application...\n'));
       const ms = await measure(
         async () => {
-          if (buildOptions.production) buildOptions.env = 'production';
-          await new Builder().build(buildOptions);
+          if (options.production) options.env = 'production';
+          await new Builder().build(options);
         },
       );
       console.log(colors.green(`\nDone in ${ms}`));
@@ -104,6 +116,7 @@ const commands = {
     description: 'Create single page application.',
     options: {
       ...sharedOptions.basePath,
+      ...sharedOptions.enginePath,
       '--title': {
         aliases: ['-t'],
         description: 'SPA index page title.',
@@ -120,12 +133,11 @@ const commands = {
           'Defaults to current directory.',
       },
     ],
-    execute: async ({ basePath, ...spaOptions }) => {
+    execute: async (options) => {
       const startMsg = '\nCreating Swayer single page application...\n';
       console.log(colors.green(startMsg));
-      const platformOptions = { basePath };
       const ms = await measure(
-        () => new Builder(platformOptions).createSPAPage(spaOptions),
+        () => new Builder().createSPAPage(options),
       );
       console.log(colors.green(`\nDone in ${ms}`));
     },
@@ -135,6 +147,7 @@ const commands = {
     description: 'Render Swayer component.',
     options: {
       ...sharedOptions.basePath,
+      ...sharedOptions.enginePath,
       ...sharedOptions.mode,
       ...sharedOptions.input,
       '--route': {
@@ -159,16 +172,15 @@ const commands = {
         description: 'Path to component schema file.',
       },
     ],
-    execute: async ({ mode, basePath, ...renderOptions }) => {
-      if (!renderOptions.path) {
+    execute: async (options) => {
+      if (!options.path) {
         const msg = '\nError: path to component schema file is not provided!';
         console.log(colors.red(msg));
         return;
       }
-      const platformOptions = { mode, basePath };
       console.log(colors.green('\nRendering Swayer component...\n'));
       const ms = await measure(
-        () => new Builder(platformOptions).render(renderOptions),
+        () => new Builder().render(options),
       );
       console.log(colors.green(`\nDone in ${ms}`));
     },
@@ -177,6 +189,8 @@ const commands = {
     aliases: ['s'],
     description: 'Serve Swayer application.',
     options: {
+      ...sharedOptions.basePath,
+      ...sharedOptions.enginePath,
       ...sharedOptions.mode,
       ...sharedOptions.input,
       '--host': {
@@ -195,11 +209,10 @@ const commands = {
         'Defaults to current directory.',
       },
     ],
-    execute: ({ mode, basePath, ...serverOptions }) => {
+    execute: (options) => {
       console.log(colors.green('\nWelcome to Swayer http server!'));
       console.log('\n-- DO NOT USE IN PRODUCTION --\n');
-      const platformOptions = { mode, basePath };
-      return new HttpServer(platformOptions).start(serverOptions);
+      return new HttpServer().start(options);
     },
   },
 };

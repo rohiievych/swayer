@@ -37,8 +37,8 @@ export const todoToggleStyles = {
   height: '40px',
   compute: ({ completed }) => ({
     backgroundImage: completed
-      ? 'url(/assets/icons/checkedCircle.svg)'
-      : 'url(/assets/icons/circle.svg)',
+      ? 'url(assets/icons/checkedCircle.svg)'
+      : 'url(assets/icons/circle.svg)',
   }),
   cursor: 'pointer',
   zIndex: 1,

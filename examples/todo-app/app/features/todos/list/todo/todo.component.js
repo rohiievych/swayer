@@ -98,7 +98,7 @@ const removeTodoBtn = (index) => {
         styles: {
           width: '25px',
           height: '25px',
-          background: 'url(/assets/icons/remove.svg) center no-repeat',
+          background: 'url(assets/icons/remove.svg) center no-repeat',
         },
       },
     ],
@@ -110,6 +110,11 @@ export default ({ todo, index }) => ({
   tag: 'li',
   styles: todoStyles,
   model: new TodoModel(todo),
+  events: {
+    click() {
+      this.router.go('todos/2');
+    },
+  },
   children: [
     {
       tag: 'div',

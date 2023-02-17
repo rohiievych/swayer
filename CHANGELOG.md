@@ -2,6 +2,18 @@
 
 ## [Unreleased][unreleased]
 
+## [1.0.0-alpha.5][] - 2023-02-17
+
+### Added
+
+- CLI usage readme section
+- New enginePath CLI option for specifying Swayer index.js module
+
+### Changed
+
+- Make CLI options more consistent
+- Make basePath handling more stable
+
 ## [1.0.0-alpha.4][] - 2023-02-14
 
 ### Added
@@ -41,7 +53,8 @@
 
 - Implement initial engine features
 
-[unreleased]: https://github.com/rohiievych/swayer/compare/v1.0.0-alpha.4...HEAD
+[unreleased]: https://github.com/rohiievych/swayer/compare/v1.0.0-alpha.5...HEAD
+[1.0.0-alpha.5]: https://github.com/rohiievych/swayer/compare/v1.0.0-alpha.4...v1.0.0-alpha.5
 [1.0.0-alpha.4]: https://github.com/rohiievych/swayer/compare/v1.0.0-alpha.3...v1.0.0-alpha.4
 [1.0.0-alpha.3]: https://github.com/rohiievych/swayer/compare/v1.0.0-alpha.2...v1.0.0-alpha.3
 [1.0.0-alpha.2]: https://github.com/rohiievych/swayer/compare/v1.0.0-alpha.1...v1.0.0-alpha.2

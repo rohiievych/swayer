@@ -1,6 +1,6 @@
 {
   "name": "swayer",
-  "version": "1.0.0-alpha.4",
+  "version": "1.0.0-alpha.5",
   "description": "Schema based UI engine",
   "author": "Roman Ohiievych <roman@swayer.dev>",
   "license": "MIT",
@@ -32,6 +32,9 @@
   "funding": {
     "type": "patreon",
     "url": "https://www.patreon.com/rohiievych"
+  },
+  "engines": {
+    "node": ">=16.0.0"
   },
   "files": [
     "index.js",
