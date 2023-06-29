@@ -47,7 +47,7 @@
     "fix": "npm run lint -- --fix"
   },
   "dependencies": {
-    "jsdom": "^21.1.0",
+    "jsdom": "^21.1.2",
     "pretty": "^2.0.0",
     "terser": "^5.16.3"
   },
