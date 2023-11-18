@@ -21,6 +21,7 @@
   "scripts": {
     "start": "swr serve",
     "start:ssr": "swr serve --mode ssr",
+    "start:dev": "swr serve -eP /node_modules/swayer/index.js",
     "linkEngine": "npm link ../../"
   },
   "dependencies": {

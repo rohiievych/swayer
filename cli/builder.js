@@ -19,6 +19,10 @@ const ensureDirAccess = async (dirPath) => {
   }
 };
 
+const resolveSrc = () => fsp.access('src')
+  .then(() => 'src')
+  .catch(() => './');
+
 const SPA_INDEX = 'index.html';
 
 const OUTPUT_DIR = 'dist';
@@ -47,9 +51,10 @@ export default class Builder {
   }
 
   async build(options) {
-    const { path = './', output, env, production: isProd } = options;
-    const srcDir = resolve(path);
-    const outputDir = output ? resolve(output) : resolve(path, OUTPUT_DIR);
+    const { path, output, env, production: isProd } = options;
+    const srcPath = path || await resolveSrc();
+    const srcDir = resolve(srcPath);
+    const outputDir = output ? resolve(output) : resolve(OUTPUT_DIR);
     const buildFiles = BUILD_FILES.map((path) => join(srcDir, path));
     const filter = (src) => buildFiles.some((name) => src.startsWith(name));
     await this.#copyDir(srcDir, outputDir, { filter, isProd });

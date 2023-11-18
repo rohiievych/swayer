@@ -2,9 +2,23 @@
 
 ## [Unreleased][unreleased]
 
+### Added
+
+- `src` folder to host core project files
+- Js-framework-benchmark example for performance tests
+
 ### Changed
 
-- Update todo-app
+- Rewrite ReactivityManager: now reactions perform direct updates to DOM bindings without schema reflection
+- Update Context API to not read schema props due to reflection removal
+- Minor updates in Core, Binding, Reactivity, Styler, Router, Events, Channels, eslint.config.js
+- Update Builder and HttpServer according to new `src` folder
+- Update examples
+- Update dependencies and version to alpha.6
+
+### Removed
+
+- Schema reflection mechanism due to prop descriptor overheads (previously updates were done through schema, but that led to redundant CPU consumption due to lots of property descriptors created to catch schema updates)
 
 ## [1.0.0-alpha.5][] - 2023-02-17
 

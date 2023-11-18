@@ -93,7 +93,6 @@ You simply don't need to use different CSS-like syntax with Swayer. JavaScript i
   - Atomicity and laziness by default
   - Reactive state models
   - Data binding
-  - Element reflection
   - Context injection
   - Namespaces
   - Routing
@@ -282,9 +281,8 @@ See `npx swr spa --help` for more command options.
 - **Model** - an object describing reactive data state and its changes.
 - **Module** - an EcmaScript native module (ES6 module)
 - **Namespace** - a name, which encapsulates a part of path and is resolved by loader.
-- **Reaction** - a pure function, which binds model state to automate component reflection.
+- **Reaction** - a pure function, which binds model state to automate component reactivity.
 - **Reactivity** - an ability of an object to update its properties on data change.
-- **Reflection** - a technique of metaprogramming, which enables instant data updates of underlying DOM, when schema properties change.
 - **Route** - an object that configures how component is being routed basing on some pattern.
 - **Router** - a routing controller, which is responsible for route management and navigation.
 - **Routing** - a mechanism, which maps routes to corresponding schemas relying on url path.
@@ -778,7 +776,7 @@ const createListItem = (id) => ({
     click() {
       const data = { prop: 'message for concrete item' };
       // select only second list item as a message consumer by id
-      const select = (ctx) => ctx.attrs === 'second-li';
+      const select = (ctx) => ctx.attrs.id === 'second-li';
       this.emitMessage('changeItemMessage', data, { select });
     },
   },
@@ -1280,6 +1278,5 @@ Example:
 Copyright (c) 2023 Roman Ohiievych.<br>
 See GitHub for full [contributors list](https://github.com/rohiievych/swayer/graphs/contributors).<br>
 Swayer framework is [MIT licensed](./LICENSE).<br>
-Original author: &lt;roman@swayer.dev&gt;<br>
 
 **Totally made in Ukraine** 🇺🇦

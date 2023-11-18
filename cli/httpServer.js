@@ -11,11 +11,15 @@ const FILE_TYPES = {
   css: 'text/css',
   js: 'text/javascript',
   json: 'application/json',
+  map: 'application/json',
   ico: 'image/x-icon',
   webp: 'image/webp',
   png: 'image/png',
   jpg: 'image/jpg',
   svg: 'image/svg+xml',
+  woff: 'font/woff',
+  woff2: 'font/woff2',
+  ttf: 'font/ttf',
 };
 
 const UNSAFE_PATH = /^(\.\.[/\\])+/;
@@ -27,6 +31,10 @@ const getType = (filePath) => {
 
 const getDate = () => new Date().toISOString();
 
+const resolveSrc = () => fsp.access('src')
+  .then(() => 'src')
+  .catch(() => './');
+
 export default class HttpServer {
   #platform;
 
@@ -35,26 +43,29 @@ export default class HttpServer {
   }
 
   async start(options) {
-    const { path = './' } = options;
-    const servePath = resolve(path);
-    const baseStats = await fsp.lstat(servePath);
+    const { path } = options;
+    const rootPath = resolve(path || './');
+    const baseStats = await fsp.lstat(rootPath);
     if (!baseStats.isDirectory()) {
-      throw Reporter.error('InvalidDirPath', servePath);
+      throw Reporter.error('InvalidDirPath', rootPath);
     }
+    const srcPath = resolve(path || await resolveSrc());
     const server = http.createServer(async (req, res) => {
       const routePath = String(req.url);
       try {
         res.statusCode = 200;
         if (routePath.includes('.')) {
           const safeSuffix = normalize(routePath).replace(UNSAFE_PATH, '');
-          const filePath = join(servePath, safeSuffix);
+          const fromModules = routePath.startsWith('/node_modules');
+          const staticPath = fromModules ? rootPath : srcPath;
+          const filePath = join(staticPath, safeSuffix);
           await fsp.access(filePath);
           const type = getType(filePath);
           res.setHeader('Content-Type', type);
           createReadStream(filePath).pipe(res);
         } else {
           const { basePath = '/', enginePath, input, mode } = options;
-          const entryPath = join(servePath, basePath, ENTRY_FILE_NAME);
+          const entryPath = join(srcPath, basePath, ENTRY_FILE_NAME);
           const renderOptions = {
             entryPath, routePath,
             basePath, enginePath,

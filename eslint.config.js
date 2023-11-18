@@ -12,6 +12,7 @@ export default [
     rules: {
       ...metarhiaRules,
       'semi': 'error',
+      'indent': ['error', 2],
       'no-trailing-spaces': ['error', { skipBlankLines: true }],
       'no-unused-vars': [
         'error',

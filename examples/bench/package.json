@@ -1,0 +1,29 @@
+{
+  "name": "js-framework-benchmark-swayer",
+  "version": "1.0.0",
+  "main": "dist/main.js",
+  "js-framework-benchmark": {
+    "frameworkVersionFromPackage": "swayer",
+    "frameworkHomeURL": "https://swayer.dev",
+    "customURL": "/dist"
+  },
+  "type": "module",
+  "author": "Roman Ohiievych",
+  "license": "Apache-2.0",
+  "homepage": "https://github.com/krausest/js-framework-benchmark",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/krausest/js-framework-benchmark.git"
+  },
+  "scripts": {
+    "start": "swr serve",
+    "start:ssr": "swr serve --mode ssr",
+    "start:dev": "swr serve -eP /node_modules/swayer/index.js",
+    "linkEngine": "npm link ../../",
+    "build-dev": "swr build && swr spa dist",
+    "build-prod": "swr build --prod && swr r dist/main.js -o dist/index.html -m ssr -p -bP /frameworks/keyed/swayer/dist/ -eP /frameworks/keyed/swayer/node_modules/swayer/index.js"
+  },
+  "dependencies": {
+    "swayer": "../../"
+  }
+}
