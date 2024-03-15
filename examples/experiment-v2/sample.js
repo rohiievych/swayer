@@ -1,0 +1,216 @@
+import { render } from '../../lib-v2/renderer.js';
+
+const example = {
+  tag: 'table',
+  attrs: () => ({ id: 'example-1' }),
+  classes: 'table table-hover table-striped test-data',
+  children: [
+    {
+      tag: 'tbody',
+      children: ({ data, row }) => ({
+        schema: row === 'row1' ? fragRow : fragRow[0],
+        of: data,
+        // of: row === 'row1' ? data.slice(0, 10) : data.slice(0, 5),
+      }),
+
+      // (state) => ({
+      //   schema: actionBtn,
+      //   input: { action: 'run', text: 'Create 1,000 rows' },
+      // }),
+    },
+  ],
+};
+
+const fragRow = [
+  {
+    tag: 'tr',
+    children: [
+      {
+        tag: 'td',
+        text: ({ id }) => id,
+      },
+    ],
+  },
+  {
+    tag: 'tr',
+    children: [
+      {
+        tag: 'td',
+        text: ({ label }) => label,
+      },
+    ],
+  },
+  {
+    tag: 'tr',
+    children: [
+      {
+        tag: 'td',
+        text: ({ label }) => label,
+      },
+    ],
+  },
+];
+
+const row2 = {
+  tag: 'tr',
+  children: [
+    {
+      tag: 'td',
+      attrs: { class: () => 'col-md-1' },
+      text: 'Col 1',
+    },
+    {
+      tag: 'td',
+      attrs: { class: () => 'col-md-2' },
+      text: () => 'Col 2',
+    },
+  ],
+};
+
+const row1 = {
+  tag: 'tr',
+  children: [
+    {
+      tag: 'td',
+      classes: 'col-md-1',
+      attrs: { class: () => 'col-md-1' },
+      text: (state) => state.id,
+    },
+    {
+      tag: 'td',
+      classes: 'col-md-4',
+      children: [
+        {
+          tag: 'a',
+          attrs: { href: '#' },
+          text: (state) => state.label,
+        },
+      ],
+    },
+    {
+      tag: 'td',
+      classes: 'col-md-1',
+      children: [
+        {
+          tag: 'a',
+          attrs: { href: '#' },
+          children: [
+            {
+              tag: 'span',
+              classes: 'glyphicon glyphicon-remove',
+              attrs: { 'aria-hidden': true },
+              text: 'This is span',
+            },
+          ],
+        },
+      ],
+    },
+    {
+      tag: 'td',
+      classes: 'col-md-6',
+    },
+  ],
+};
+
+const frag = [
+  {
+    tag: 'h4',
+    text: (state) => state.name,
+  },
+  {
+    tag: 'p',
+    text: (state) => state.description,
+  },
+];
+
+const example2 = {
+  tag: 'main',
+  attrs: () => ({ id: 'example-2' }),
+  children: [
+    {
+      tag: 'section',
+      // children: [
+      //   {
+      //     schema: frag,
+      //     of: [
+      //       { name: 'Apple', description: 'Green apple' },
+      //       { name: 'Pear', description: 'Tasty fruit' },
+      //     ],
+      //   },
+      // ],
+      children: [
+        {
+          tag: 'h3',
+          text: 'Before fruits',
+        },
+        ({ fruits }) => ({
+          schema: {
+            tag: 'h5',
+            text: () => `Fruits: ${fruits.length}`,
+          },
+          of: fruits,
+        }),
+        {
+          tag: 'h3',
+          text: 'After fruits',
+        },
+        ({ fruits, isUpdate }) => ({
+          schema: isUpdate ? frag.concat(frag) : frag,
+          of: fruits,
+        }),
+      ],
+
+      // (state) => ({
+      //   schema: actionBtn,
+      //   input: { action: 'run', text: 'Create 1,000 rows' },
+      // }),
+    },
+  ],
+};
+
+/** @type {any} */
+const root = document.getElementById('root');
+/** @type {any} */
+const createBtn = document.getElementById('create');
+/** @type {any} */
+const updateBtn = document.getElementById('update');
+/** @type {any} */
+const deleteBtn = document.getElementById('delete');
+
+const createArray = (num = 1000) => new Array(num).fill(null);
+const createItem = (add = 0) => (_, i) => ({
+  id: 1 + i + add,
+  label: `Item ${1 + i + add}`,
+});
+
+createBtn.addEventListener('click', () => {
+  const exampleElement = document.querySelector('#example-1');
+  const state = { data: createArray().map(createItem()), row: exampleElement ? 'row1' : 'row2' };
+  const resultEl = render(example, state, exampleElement);
+  if (!exampleElement) root.append(resultEl);
+});
+
+updateBtn.addEventListener('click', () => {
+  const exampleElement2 = document.querySelector('#example-2');
+  const state2 = {
+    // data: createArray().map(createItem(100)),
+    // row: 'row2',
+    fruits: [
+      { name: 'Apple', description: 'Green apple' },
+      { name: 'Pear', description: 'Tasty fruit' },
+    ],
+    isUpdate: !!exampleElement2,
+  };
+  const resultEl = render(example2, state2, exampleElement2);
+  if (!exampleElement2) root.append(resultEl);
+});
+
+deleteBtn.addEventListener('click', () => {
+  const exampleElement = document.querySelector('#example-1');
+  const state = { data: [] };
+  render(example, state, exampleElement);
+
+  const exampleElement2 = document.querySelector('#example-2');
+  const state2 = { fruits: [] };
+  render(example2, state2, exampleElement2);
+});
