@@ -1,7 +1,7 @@
 // Swayer system prefix
 export const SYSTEM_PREFIX = 'swr';
 // Fragment placeholder string
-export const FRAG_PLACEHOLDER = `${SYSTEM_PREFIX}-placeholder`;
+export const FRAG_PLACEHOLDER = `${SYSTEM_PREFIX}-frag-placeholder`;
 // Fragment range start marker
 export const FRAG_RANGE_START = `${SYSTEM_PREFIX}-range-start`;
 // Fragment range end marker

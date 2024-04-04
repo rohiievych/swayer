@@ -1,3 +1,4 @@
+import diff from '../node_modules/deep-object-diff/mjs/diff.js';
 import {
   DATA_ATTR_NAME,
   FRAG_PLACEHOLDER,
@@ -5,13 +6,38 @@ import {
   FRAG_RANGE_START,
   NODE_SCHEMA,
 } from './constants.js';
-import { camelToKebabCase, equal, hasOwn, is } from './utils.js';
+import { camelToKebabCase, hasOwn, is } from './utils.js';
 
-const setElementText = (element, text) => {
-  if (is.nullish(text)) {
-    text = '';
-  } else if (!is.str(text)) text = text.toString();
-  element.textContent = text;
+const isNode = {
+  text: (node) => node.nodeType === Node.TEXT_NODE,
+  comment: (node) => node.nodeType === Node.COMMENT_NODE,
+};
+
+// Check if node corresponds to schema tag or text
+const checkNode = (node, schema) => {
+  if (!node || is.nullish(schema)) return false;
+  const isTxtNode = isNode.text(node);
+  if (isTxtNode && is.basic(schema)) {
+    return node.textContent === schema.toString();
+  }
+  return node.nodeName.toLowerCase() === schema.tag;
+};
+
+const isEmptySchema = (schema) => is.nullish(schema)
+  || schema === ''
+  || schema === false;
+
+const replaceNode = (node, replaceTag) => {
+  if (node.nodeName.toLowerCase() === replaceTag) return;
+  const newNode = document.createElement(replaceTag);
+  node.replaceWith(newNode);
+};
+
+const setElementText = (node, text) => {
+  if (is.nullish(text)) text = '';
+  else if (!is.str(text)) text = text.toString();
+  const existing = node.textContent;
+  if (existing !== text) node.textContent = text;
 };
 
 const setElementInlineStyle = (element, props) => {
@@ -24,13 +50,10 @@ const setElementInlineStyle = (element, props) => {
 const setElementAttr = (element, name, value) => {
   if (is.fn(value)) return;
   const attr = camelToKebabCase(name);
-  if (attr === 'style') {
-    setElementInlineStyle(element, value);
-  } else if (value === true) {
-    element.setAttribute(attr, '');
-  } else if (value === false) {
-    element.removeAttribute(attr);
-  } else if (value !== undefined) element.setAttribute(attr, value);
+  if (attr === 'style') setElementInlineStyle(element, value);
+  else if (value === true) element.setAttribute(attr, '');
+  else if (value === false) element.removeAttribute(attr);
+  else if (value !== undefined) element.setAttribute(attr, value);
 };
 
 const setElementAttrs = (element, attrs) => {
@@ -77,6 +100,8 @@ const createComponent = (schema) => {
   while (stack.length > 0) {
     const { schema, parentElement, indexPath } = stack.pop();
 
+    if (isEmptySchema(schema)) continue;
+
     // Collect bindings
     const binding = new Map();
 
@@ -89,18 +114,22 @@ const createComponent = (schema) => {
       appendFragmentPlaceholder(parentElement);
       continue;
     }
+    // Primitive schemas (strings, numbers, symbols)
+    if (is.basic(schema)) {
+      const text = document.createTextNode(schema);
+      binding.set(['text'], schema);
+      setElementText(text, schema);
+      parentElement.append(text);
+      continue;
+    }
 
     const element = document.createElement(schema.tag);
 
-    if (is.fn(schema.text)) {
-      binding.set(['text'], schema.text);
-    } else {
-      setElementText(element, schema.text);
-    }
+    if (is.fn(schema.text)) binding.set(['text'], schema.text);
+    else setElementText(element, schema.text);
 
     if (is.fn(schema.attrs)) {
       binding.set(['attrs'], schema.attrs);
-
     } else if (is.obj(schema.attrs)) {
       for (const [attr, value] of Object.entries(schema.attrs)) {
         if (is.fn(value)) binding.set(['attrs', attr], value);
@@ -123,33 +152,172 @@ const createComponent = (schema) => {
     }
 
     if (binding.size > 0) bindings.set(indexPath, binding);
-
-    if (parentElement) {
-      parentElement.append(element);
-    } else {
-      templateNode = element;
-    }
+    if (parentElement) parentElement.append(element);
+    else templateNode = element;
   }
 
   return { templateNode, bindings };
 };
 
-// Find element in fragment by index path
-const findBoundElement = (rootElement, indexPath) => {
-  let element = rootElement;
-  for (const index of indexPath) {
-    element = element.children[index];
+// Skip 'children' path segment if children is obj or arr
+const resolveUpdatePath = (prop, value, path) => {
+  if (prop === 'children') {
+    if (is.arr(value) || is.obj(value)) return path;
   }
-  return element;
+  return [...path, prop];
 };
 
+// Convert diffs to update paths
+const exploreUpdates = (obj, path = [], results = []) =>
+  Object.entries(obj).reduce((results, [key, val]) => {
+    const newPath = resolveUpdatePath(key, val, path);
+    if (is.obj(val)) return exploreUpdates(val, newPath, results);
+    else if (isEmptySchema(val)) results.push(newPath);
+    else results.push([...newPath, val]);
+    return results;
+  }, results);
+
+// Split indexPaths (node drilling) and propPaths (node props to update)
+const splitUpdatePath = (updatePath) => {
+  const indexPaths = [];
+  const pathLen = updatePath.length;
+  for (let i = 0; i < pathLen; ++i) {
+    const item = +updatePath[i];
+    if (isNaN(item)) return [indexPaths, updatePath.slice(i)];
+    indexPaths.push(item);
+  }
+  return [indexPaths, []];
+};
+
+// Get schema diffs
+const getUpdatePaths = (prevSchema, curSchema) => {
+  const diffs = diff(prevSchema, curSchema);
+  const updatePaths = exploreUpdates(diffs);
+  return updatePaths.map(splitUpdatePath);
+};
+
+// Make element in fragment by index path
+const makeBoundNode = (rootNode, schema, state, indexPath) => {
+  // Collect removals to prevent incorrect childNode indexing
+  const removals = [];
+  let node = rootNode;
+  let currentSchema = schema;
+  for (const index of indexPath) {
+    if (is.arr(currentSchema)) {
+      currentSchema = currentSchema[index];
+    } else if (is.obj(currentSchema) && hasOwn(currentSchema, 'children')) {
+      currentSchema = currentSchema.children[index];
+    }
+    const child = node.childNodes[index];
+    if (checkNode(child, currentSchema)) {
+      node = child;
+    } else if (child) {
+      const renderResult = render(currentSchema, state);
+      if (isEmptySchema(renderResult)) {
+        removals.push(() => child.remove());
+        break;
+      }
+      child.replaceWith(renderResult);
+      node = renderResult;
+      break;
+    } else if (!isEmptySchema(currentSchema)) {
+      const renderResult = render(currentSchema, state);
+      node.append(renderResult);
+      node = renderResult;
+      break;
+    }
+  }
+  return [node, removals];
+};
+
+const applyTopNodeUpdates = (node, schema, state) => {
+  if (isEmptySchema(schema)) {
+    node.remove();
+    return true;
+  }
+  if (!checkNode(node, schema)) {
+    const newNode = render(schema, state);
+    node.replaceWith(newNode);
+    return true;
+  }
+  return false;
+};
+
+const applyNodeUpdates = (node, schema, updatePaths, state) => {
+  const removeActions = [];
+  for (const path of updatePaths) {
+    const [indexPath, propPath] = path;
+    const [prop, nestedProp, value] = propPath;
+    const [boundNode, removals] = makeBoundNode(node, schema, state, indexPath);
+    if (removals.length > 0) removeActions.push(...removals);
+    if (!boundNode || !nestedProp) continue;
+    const actions = makeUpdateActions(boundNode);
+    const action = actions[prop];
+    const noVal = value === undefined;
+    const val = noVal ? nestedProp : value;
+    const nested = noVal ? undefined : nestedProp;
+    const updatedVal = is.fn(val) ? val(state) : val;
+    const updateChildren = action(updatedVal, nested);
+    // Replaces existing node with fragment
+    if (updateChildren) updateChildren();
+  }
+  for (const action of removeActions) action();
+};
+
+const updateFragment = (inputSchema, parentNode, data, fragRange) => {
+  const children = parentNode.childNodes;
+  const dataLength = data.length;
+  const schemas = is.arr(inputSchema) ? inputSchema : [inputSchema];
+  const schemasLength = schemas.length;
+  const { startOffset, endOffset } = fragRange;
+  const fragEndNode = children[endOffset];
+  let start = startOffset;
+  let end = start;
+  // Update nodes
+  for (let i = 0; i < dataLength; ++i) {
+    const state = data[i];
+    let schemaIndex = 0;
+    start = i * schemasLength + startOffset;
+    end = start + schemasLength;
+    // Iterate fragment nodes
+    for (let j = start; j < end; ++j) {
+      const childNode = children[j];
+      schemaIndex = j - start;
+      // Append new nodes to fragment if schemas run out of range
+      if (start + schemaIndex >= endOffset || !childNode) {
+        // Append only remaining part of schemas
+        const part = schemaIndex > 0 ? schemas.slice(schemaIndex) : schemas;
+        const newNode = render(part, state);
+        if (newNode) fragEndNode.before(newNode);
+        break;
+      }
+      const schema = schemas[schemaIndex];
+      // Apply high level replacements
+      const isApplied = applyTopNodeUpdates(childNode, schema, state);
+      if (isApplied) continue;
+      const prevSchema = childNode[NODE_SCHEMA];
+      const updatePaths = getUpdatePaths(prevSchema, schema);
+      // Apply updates
+      applyNodeUpdates(childNode, schema, updatePaths, state);
+    }
+  }
+  // Remove trailing nodes
+  if (end < endOffset) {
+    const range = new Range();
+    range.setStart(parentNode, end);
+    range.setEnd(parentNode, endOffset);
+    range.deleteContents();
+  }
+};
+
+// Calculate node range using comment markers
 const getFragmentRange = (parentElement, index) => {
   const nodes = parentElement.childNodes;
   const nodesLength = nodes.length;
   let range;
   for (let i = 0; i < nodesLength; ++i) {
     const child = nodes[i];
-    if (child.nodeType !== Node.COMMENT_NODE) continue;
+    if (!isNode.comment(child) && child.data !== FRAG_PLACEHOLDER) continue;
     const [marker, fragIndex] = child.data.split(':');
     if (+fragIndex !== index) continue;
     if (marker === FRAG_RANGE_START) {
@@ -169,9 +337,10 @@ const renderFragment = (schema, index, data) => {
   const start = new Comment(`${FRAG_RANGE_START}:${index}`);
   const end = new Comment(`${FRAG_RANGE_END}:${index}`);
   // First read
-  const nodes = is.arr(data)
+  const nodes = (is.arr(data)
     ? data.map((datum) => render(schema, datum))
-    : [render(schema, data)];
+    : [render(schema, data)])
+  .filter((node) => !isEmptySchema(node));
   // Then write
   fragment.append(start, ...nodes, end);
   return fragment;
@@ -184,146 +353,98 @@ const prepareFragmentInsertion = (parentElement, fragment, index) => {
   return () => fragmentPlaceholder.replaceWith(fragment);
 };
 
-const compareNodeSchemas = (start, end, schema, children) => {
-  for (let i = start; i < end; ++i) {
-    const isSame = equal(schema, children[i][NODE_SCHEMA]);
-    if (isSame) continue;
-    return false;
-  }
-  return true;
-};
-
-const updateSchema = (schema, parentNode, data, fragRange) => {
-  const children = parentNode.childNodes;
-  const dataLength = data.length;
-  const schemasLength = is.arr(schema) ? schema.length : 1;
-  // const ops = [];
-  const { startOffset, endOffset } = fragRange;
-  const fragEndNode = children[endOffset];
-  let start = startOffset;
-  let end = start;
-
-  // Start reading nodes
-  for (let i = 0; i < dataLength; ++i) {
-    const state = data[i];
-    start = i * schemasLength + startOffset;
-    end = start + schemasLength;
-
-    // Append new nodes to fragment
-    if (start >= endOffset) {
-      const newNode = render(schema, state);
-      fragEndNode.before(newNode);
-      continue;
-    }
-
-    // Set fragment range
-    const innerRange = new Range();
-    innerRange.setStart(parentNode, start);
-
-    if (end >= endOffset) {
-      innerRange.setEndBefore(fragEndNode);
-    } else {
-      innerRange.setEnd(parentNode, end);
-    }
-
-    const areSameNodes = compareNodeSchemas(start, end, schema, children);
-
-    // Update fragment range
-    if (areSameNodes) {
-      render(schema, state, innerRange.cloneContents());
-    } else {
-      const newNode = render(schema, state);
-      innerRange.deleteContents();
-      innerRange.insertNode(newNode);
-    }
-  }
-  // Remove trailing nodes
-  if (end < endOffset) {
-    const range = new Range();
-    range.setStart(parentNode, end);
-    range.setEnd(parentNode, endOffset);
-    range.deleteContents();
-  }
-};
-
 const renderChildren = (schema, parentElement, fragmentIndex, data) => {
   const range = getFragmentRange(parentElement, fragmentIndex);
-  if (range) {
-    updateSchema(schema, parentElement, data, range);
-    return;
-  }
+  if (range) return updateFragment(schema, parentElement, data, range);
   const fragment = renderFragment(schema, fragmentIndex, data);
   return prepareFragmentInsertion(parentElement, fragment, fragmentIndex);
 };
 
-// STAGE 2: render component bindings
-const renderComponent = (rootElement, bindings, state) => {
-  /** @type {any} */
-  const fragmentInsertions = [];
-
-  for (const [indexPath, binding] of bindings) {
-    const parentElement = findBoundElement(rootElement, indexPath);
-    // Render bound props
-    for (const [propPath, binder] of binding) {
-
-      // Schema first level props
-      if (propPath.length === 1) {
-        const [prop] = propPath;
-
-        if (prop === 'text') {
-          const text = binder(state);
-          setElementText(parentElement, text);
-
-        } else if (prop === 'children') {
-          const { schema, of } = binder(state);
-          const insertion = renderChildren(schema, parentElement, 0, of);
-          if (insertion) fragmentInsertions.push(insertion);
-
-        } else if (prop === 'attrs') {
-          const attrs = binder(state);
-          setElementAttrs(parentElement, attrs);
-        }
-        continue;
-      }
-      // Schema second level props
-      const [prop, indexProp] = propPath;
-
-      if (prop === 'children') {
-        const { schema, of } = binder(state);
-        const insertion = renderChildren(schema, parentElement, indexProp, of);
-        if (insertion) fragmentInsertions.push(insertion);
-
-      } else if (prop === 'attrs') {
-        const attrVal = binder(state);
-        setElementAttr(parentElement, indexProp, attrVal);
-      }
-    }
+// Remove empty schema values
+const cleanSchema = (schema) => {
+  if (!is.obj(schema)) return schema;
+  if (is.arr(schema)) {
+    return schema.reduce((acc, item) => {
+      if (!isEmptySchema(item)) acc.push(cleanSchema(item));
+      return acc;
+    }, []);
   }
-
-  // Apply fragment insertions
-  for (const insertion of fragmentInsertions) insertion();
-
-  return rootElement;
+  const result = {};
+  for (const key in schema) {
+    if (!hasOwn(schema, key)) continue;
+    let value = schema[key];
+    if (isEmptySchema(value)) continue;
+    // Create new bindings to differ similar nodes
+    if (is.fn(value)) result[key] = value.bind(schema);
+    else result[key] = cleanSchema(value);
+  }
+  return result;
 };
 
-const COMPONENT_TEMPLATES = new WeakMap();
+// Define schema to node update mapping
+const makeUpdateActions = (parentElement) => ({
+  tag: (value) => replaceNode(parentElement, value),
+  text: (value) => setElementText(parentElement, value),
+  attrs: (value, nestedProp) => {
+    if (nestedProp) setElementAttr(parentElement, nestedProp, value);
+    else setElementAttrs(parentElement, value);
+  },
+  children: (value, nestedProp) => {
+    const isLoop = hasOwn(value, 'of');
+    if (isLoop) {
+      const { schema, of } = value;
+      const cleanedSchema = cleanSchema(schema);
+      const index = nestedProp || 0;
+      return renderChildren(cleanedSchema, parentElement, index, of);
+    }
+  },
+});
 
-export const render = (schema, state, rootElement) => {
-  let component = COMPONENT_TEMPLATES.get(schema);
-  if (!component) {
-    component = createComponent(schema);
-    COMPONENT_TEMPLATES.set(schema, component);
-  }
-  const { templateNode, bindings } = component;
-  let element = rootElement || templateNode.cloneNode(true);
-
-  if (!hasOwn(element, 'schema')) {
-    element[NODE_SCHEMA] = schema;
-    if (element instanceof DocumentFragment) {
-      const children = element.children;
-      const len = children.length;
-      for (let i = 0; i < len; ++i) children[i][NODE_SCHEMA] = schema;
+// STAGE 2: render component bindings
+const renderComponent = (rootNode, schema, bindings, state) => {
+  const fragmentInsertions = [];
+  for (const [indexPath, binding] of bindings) {
+    const [parentNode] = makeBoundNode(rootNode, schema, state, indexPath);
+    const actions = makeUpdateActions(parentNode);
+    // Render bound props
+    for (const [propPath, binder] of binding) {
+      const [prop, nestedProp] = propPath;
+      const action = actions[prop];
+      if (!action) continue;
+      const insertion = action(binder(state), nestedProp);
+      if (insertion) fragmentInsertions.push(insertion);
     }
   }
-  return renderComponent(element, bindings, state);
+  // Apply fragment insertions
+  for (const insertion of fragmentInsertions) insertion();
+  return rootNode;
+};
+
+const componentTemplates = new WeakMap();
+
+const getComponent = (schema) => {
+  const component = componentTemplates.get(schema);
+  if (component) return component;
+  const newComponent = createComponent(schema);
+  componentTemplates.set(schema, newComponent);
+  return newComponent;
+};
+
+const assignComponentSchema = (node, schema) => {
+  if (hasOwn(node, NODE_SCHEMA)) return;
+  const cleanedSchema = cleanSchema(schema);
+  node[NODE_SCHEMA] = cleanedSchema;
+  if (node.constructor.name === 'DocumentFragment') {
+    const children = node.childNodes;
+    const len = children.length;
+    for (let i = 0; i < len; ++i) children[i][NODE_SCHEMA] = cleanedSchema;
+  }
+};
+
+export const render = (schema, state, rootNode) => {
+  if (is.nullish(schema) || is.basic(schema)) return schema;
+  const { templateNode, bindings } = getComponent(schema);
+  const componentNode = rootNode || templateNode.cloneNode(true);
+  assignComponentSchema(componentNode, schema);
+  return renderComponent(componentNode, schema, bindings, state);
 };

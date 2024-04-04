@@ -48,6 +48,22 @@ const equal = (a, b) => {
   return false;
 };
 
+const mergeDeep = (target, source) => {
+  if (!is.obj(target) || !is.obj(source)) return source;
+  Object.keys(source).forEach((key) => {
+    const targetValue = target[key];
+    const sourceValue = source[key];
+    if (is.arr(targetValue) && is.arr(sourceValue)) {
+      target[key] = targetValue.concat(sourceValue);
+    } else if (is.obj(targetValue) && is.obj(sourceValue)) {
+      target[key] = mergeDeep(Object.assign({}, targetValue), sourceValue);
+    } else {
+      target[key] = sourceValue;
+    }
+  });
+  return target;
+};
+
 const camelToKebabCase = (() => {
   const camelCasePattern = /[A-Z]/g;
   const replacer = (letter) => `-${letter.toLowerCase()}`;
@@ -68,6 +84,7 @@ export {
   hasOwn,
   isEnumerable,
   equal,
+  mergeDeep,
   camelToKebabCase,
   normalizePath,
   isBrowser,

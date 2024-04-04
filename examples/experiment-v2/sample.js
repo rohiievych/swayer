@@ -1,5 +1,49 @@
 import { render } from '../../lib-v2/renderer.js';
 
+const div = {
+  tag: 'div',
+  children: [
+    { tag: 'p', text: 'I am p element 1' },
+    'I am span 1',
+    'I am span 1.1',
+    'I am span 1.2',
+    '',
+    '',
+    {
+      tag: 'p',
+      children: [
+        {
+          tag: 'span',
+          children: [
+            { tag: 'span', text: 'I am inner span 1' },
+            { tag: 'p', text: 'I am inner span 2' },
+            'I am text 1',
+          ],
+        },
+        // { tag: 'p', text: 'I am inner span 2' },
+      ],
+    },
+  ],
+};
+
+const div2 = {
+  tag: 'div',
+  children: [
+    { tag: 'p', text: 'I am p element 1' },
+    'I am span 1',
+    // { tag: 'p', text: 'I am p element 2' },
+    {
+      tag: 'p',
+      children: [
+        'aaa',
+        // { tag: 'p', text: 'I am inner span 2' },
+        // undefined,
+        null,
+      ],
+    },
+  ],
+};
+
 const example = {
   tag: 'table',
   attrs: () => ({ id: 'example-1' }),
@@ -8,6 +52,7 @@ const example = {
     {
       tag: 'tbody',
       children: ({ data, row }) => ({
+        // schema: row === 'row1' ? div : div2,
         schema: row === 'row1' ? fragRow : fragRow[0],
         of: data,
         // of: row === 'row1' ? data.slice(0, 10) : data.slice(0, 5),
@@ -15,7 +60,7 @@ const example = {
 
       // (state) => ({
       //   schema: actionBtn,
-      //   input: { action: 'run', text: 'Create 1,000 rows' },
+      //   args: { action: 'run', text: 'Create 1,000 rows' },
       // }),
     },
   ],
@@ -27,7 +72,47 @@ const fragRow = [
     children: [
       {
         tag: 'td',
+        // attrs: {
+        //   test: 1,
+        // },
         text: ({ id }) => id,
+        // children: () => ({
+        //   schema: {
+        //     tag: 'p',
+        //     text: 'Para',
+        //   },
+        //   of: [{ data: 'abc' }, { data: 'abc' }],
+        // }),
+      },
+    ],
+  },
+  {
+    tag: 'tr',
+    children: [
+      {
+        tag: 'td',
+        text: ({ label }) => label,
+      },
+    ],
+  },
+  {
+    tag: 'tr',
+    children: [
+      {
+        tag: 'td',
+        text: ({ label }) => label,
+      },
+    ],
+  },
+];
+
+const fragRow2 = [
+  {
+    tag: 'tr',
+    children: [
+      {
+        tag: 'td',
+        text: 'Name',
       },
     ],
   },
@@ -144,10 +229,7 @@ const example2 = {
           text: 'Before fruits',
         },
         ({ fruits }) => ({
-          schema: {
-            tag: 'h5',
-            text: () => `Fruits: ${fruits.length}`,
-          },
+          schema: frag,
           of: fruits,
         }),
         {
@@ -185,7 +267,10 @@ const createItem = (add = 0) => (_, i) => ({
 
 createBtn.addEventListener('click', () => {
   const exampleElement = document.querySelector('#example-1');
-  const state = { data: createArray().map(createItem()), row: exampleElement ? 'row1' : 'row2' };
+  const state = {
+    data: createArray().map(createItem()),
+    row: exampleElement ? 'row1' : 'row2',
+  };
   const resultEl = render(example, state, exampleElement);
   if (!exampleElement) root.append(resultEl);
 });
