@@ -44,6 +44,42 @@ const div2 = {
   ],
 };
 
+const r1 = {
+  tag: 'tr',
+  children: [
+    {
+      tag: 'td',
+      text: 'I am r1',
+    },
+  ],
+};
+
+const r2 = [
+  {
+    tag: 'tr',
+    children: [
+      {
+        tag: 'td',
+        text: 'I am r2 frag',
+      },
+    ],
+  },
+  {
+    tag: 'tr',
+    children: [
+      {
+        tag: 'td',
+        text: 'I am r2 frag',
+      },
+    ],
+  },
+];
+
+const actionBtn = {
+  tag: 'button',
+  text: (state) => state.text,
+};
+
 const example = {
   tag: 'table',
   attrs: () => ({ id: 'example-1' }),
@@ -51,14 +87,15 @@ const example = {
   children: [
     {
       tag: 'tbody',
-      children: ({ data, row }) => ({
-        // schema: row === 'row1' ? div : div2,
-        schema: row === 'row1' ? fragRow : fragRow[0],
-        of: data,
-        // of: row === 'row1' ? data.slice(0, 10) : data.slice(0, 5),
-      }),
+      children: ({ data, row }) => row === 'row1' ? r1 : r2,
+      // children: ({ data, row }) => ({
+      //   schema: [row === 'row1' ? div : div2, { tag: 'hr' }],
+      //   // schema: row === 'row1' ? fragRow : fragRow[0],
+      //   of: data,
+      //   // of: row === 'row1' ? data.slice(0, 10) : data.slice(0, 5),
+      // }),
 
-      // (state) => ({
+      // children: (state) => ({
       //   schema: actionBtn,
       //   args: { action: 'run', text: 'Create 1,000 rows' },
       // }),

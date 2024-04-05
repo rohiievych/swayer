@@ -10,6 +10,7 @@ import { camelToKebabCase, hasOwn, is } from './utils.js';
 
 const isNode = {
   text: (node) => node.nodeType === Node.TEXT_NODE,
+  element: (node) => node.nodeType === Node.ELEMENT_NODE,
   comment: (node) => node.nodeType === Node.COMMENT_NODE,
 };
 
@@ -213,18 +214,13 @@ const makeBoundNode = (rootNode, schema, state, indexPath) => {
       node = child;
     } else if (child) {
       const renderResult = render(currentSchema, state);
-      if (isEmptySchema(renderResult)) {
-        removals.push(() => child.remove());
-        break;
-      }
-      child.replaceWith(renderResult);
-      node = renderResult;
-      break;
-    } else if (!isEmptySchema(currentSchema)) {
+      if (isEmptySchema(renderResult)) removals.push(() => child.remove());
+      else child.replaceWith(renderResult);
+      return [renderResult, removals];
+    } else if (isNode.element(node)) {
       const renderResult = render(currentSchema, state);
       node.append(renderResult);
-      node = renderResult;
-      break;
+      return [renderResult, removals];
     }
   }
   return [node, removals];
@@ -251,7 +247,7 @@ const applyNodeUpdates = (node, schema, updatePaths, state) => {
     const [boundNode, removals] = makeBoundNode(node, schema, state, indexPath);
     if (removals.length > 0) removeActions.push(...removals);
     if (!boundNode || !nestedProp) continue;
-    const actions = makeUpdateActions(boundNode);
+    const actions = makeUpdateActions(boundNode, state);
     const action = actions[prop];
     const noVal = value === undefined;
     const val = noVal ? nestedProp : value;
@@ -295,10 +291,15 @@ const updateFragment = (inputSchema, parentNode, data, fragRange) => {
       // Apply high level replacements
       const isApplied = applyTopNodeUpdates(childNode, schema, state);
       if (isApplied) continue;
-      const prevSchema = childNode[NODE_SCHEMA];
+      const prevSchemas = childNode[NODE_SCHEMA];
+      const prevSchema = is.arr(prevSchemas)
+        ? prevSchemas[schemaIndex]
+        : prevSchemas;
       const updatePaths = getUpdatePaths(prevSchema, schema);
       // Apply updates
       applyNodeUpdates(childNode, schema, updatePaths, state);
+      // Update node schema
+      childNode[NODE_SCHEMA] = inputSchema;
     }
   }
   // Remove trailing nodes
@@ -371,7 +372,6 @@ const cleanSchema = (schema) => {
   }
   const result = {};
   for (const key in schema) {
-    if (!hasOwn(schema, key)) continue;
     let value = schema[key];
     if (isEmptySchema(value)) continue;
     // Create new bindings to differ similar nodes
@@ -382,7 +382,7 @@ const cleanSchema = (schema) => {
 };
 
 // Define schema to node update mapping
-const makeUpdateActions = (parentElement) => ({
+const makeUpdateActions = (parentElement, defaultState) => ({
   tag: (value) => replaceNode(parentElement, value),
   text: (value) => setElementText(parentElement, value),
   attrs: (value, nestedProp) => {
@@ -390,13 +390,18 @@ const makeUpdateActions = (parentElement) => ({
     else setElementAttrs(parentElement, value);
   },
   children: (value, nestedProp) => {
-    const isLoop = hasOwn(value, 'of');
-    if (isLoop) {
-      const { schema, of } = value;
-      const cleanedSchema = cleanSchema(schema);
-      const index = nestedProp || 0;
-      return renderChildren(cleanedSchema, parentElement, index, of);
+    if (isEmptySchema(value)) return;
+    let schema = value;
+    let data = [defaultState];
+    if (hasOwn(value, 'of')) {
+      ({ schema, of: data } = value);
+    } else if (hasOwn(value, 'args')) {
+      ({ schema } = value);
+      data = [value.args];
     }
+    const cleanedSchema = cleanSchema(schema);
+    const index = nestedProp || 0;
+    return renderChildren(cleanedSchema, parentElement, index, data);
   },
 });
 
@@ -405,7 +410,7 @@ const renderComponent = (rootNode, schema, bindings, state) => {
   const fragmentInsertions = [];
   for (const [indexPath, binding] of bindings) {
     const [parentNode] = makeBoundNode(rootNode, schema, state, indexPath);
-    const actions = makeUpdateActions(parentNode);
+    const actions = makeUpdateActions(parentNode, state);
     // Render bound props
     for (const [propPath, binder] of binding) {
       const [prop, nestedProp] = propPath;
