@@ -46,9 +46,13 @@ const div2 = {
 
 const r1 = {
   tag: 'tr',
+  attrs: {
+    test: 1,
+  },
   children: [
     {
       tag: 'td',
+      classes: 'td-123',
       text: 'I am r1',
     },
   ],
@@ -87,13 +91,13 @@ const example = {
   children: [
     {
       tag: 'tbody',
-      children: ({ data, row }) => row === 'row1' ? r1 : r2,
-      // children: ({ data, row }) => ({
-      //   schema: [row === 'row1' ? div : div2, { tag: 'hr' }],
-      //   // schema: row === 'row1' ? fragRow : fragRow[0],
-      //   of: data,
-      //   // of: row === 'row1' ? data.slice(0, 10) : data.slice(0, 5),
-      // }),
+      // children: ({ data, row }) => row === 'row1' ? r1 : r2,
+      children: ({ data, row }) => ({
+        // schema: [row === 'row1' ? div : div2, { tag: 'hr' }],
+        schema: row === 'row1' ? fragRow : fragRow[0],
+        of: data,
+        // of: row === 'row1' ? data.slice(0, 10) : data.slice(0, 5),
+      }),
 
       // children: (state) => ({
       //   schema: actionBtn,

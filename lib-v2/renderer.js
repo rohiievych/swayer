@@ -24,15 +24,9 @@ const checkNode = (node, schema) => {
   return node.nodeName.toLowerCase() === schema.tag;
 };
 
-const isEmptySchema = (schema) => is.nullish(schema)
-  || schema === ''
-  || schema === false;
-
-const replaceNode = (node, replaceTag) => {
-  if (node.nodeName.toLowerCase() === replaceTag) return;
-  const newNode = document.createElement(replaceTag);
-  node.replaceWith(newNode);
-};
+const isEmptyValue = (value) => is.nullish(value)
+  || value === ''
+  || value === false;
 
 const setElementText = (node, text) => {
   if (is.nullish(text)) text = '';
@@ -53,13 +47,16 @@ const setElementAttr = (element, name, value) => {
   const attr = camelToKebabCase(name);
   if (attr === 'style') setElementInlineStyle(element, value);
   else if (value === true) element.setAttribute(attr, '');
-  else if (value === false) element.removeAttribute(attr);
-  else if (value !== undefined) element.setAttribute(attr, value);
+  else if (isEmptyValue(value)) element.removeAttribute(attr);
+  else element.setAttribute(attr, value);
 };
 
 const setElementAttrs = (element, attrs) => {
-  if (!is.obj(attrs)) return;
   const attrNames = element.getAttributeNames();
+  if (isEmptyValue(attrs)) {
+    for (const name of attrNames) element.removeAttribute(name);
+    return;
+  }
   for (const name of attrNames) {
     const hasAttr = hasOwn(attrs, name);
     const isMandatoryAttr = name.startsWith(DATA_ATTR_NAME) || name === 'class';
@@ -101,7 +98,7 @@ const createComponent = (schema) => {
   while (stack.length > 0) {
     const { schema, parentElement, indexPath } = stack.pop();
 
-    if (isEmptySchema(schema)) continue;
+    if (isEmptyValue(schema)) continue;
 
     // Collect bindings
     const binding = new Map();
@@ -125,17 +122,22 @@ const createComponent = (schema) => {
     }
 
     const element = document.createElement(schema.tag);
+    const { text, attrs, classes } = schema;
 
-    if (is.fn(schema.text)) binding.set(['text'], schema.text);
-    else setElementText(element, schema.text);
+    if (is.fn(text)) binding.set(['text'], text);
+    else setElementText(element, text);
 
-    if (is.fn(schema.attrs)) {
-      binding.set(['attrs'], schema.attrs);
-    } else if (is.obj(schema.attrs)) {
-      for (const [attr, value] of Object.entries(schema.attrs)) {
+    if (is.fn(attrs)) {
+      binding.set(['attrs'], attrs);
+    } else if (is.obj(attrs)) {
+      for (const [attr, value] of Object.entries(attrs)) {
         if (is.fn(value)) binding.set(['attrs', attr], value);
+        else setElementAttr(element, attr, value);
       }
     }
+
+    if (is.fn(classes)) binding.set(['classes'], classes);
+    else if (is.str(classes)) setElementAttr(element, 'class', classes);
 
     const children = schema.children;
     if (is.fn(children)) {
@@ -168,12 +170,23 @@ const resolveUpdatePath = (prop, value, path) => {
   return [...path, prop];
 };
 
+// Do not include deep updates if parent tag is changed
+// This reduces unnecessary updates as parent is fully replaced
+const optimizeUpdates = (path, results) => {
+  const len = results.length;
+  if (len === 0) return false;
+  const [index, prop] = results[len - 1];
+  const nextIndex = path[0];
+  return index === nextIndex && prop === 'tag';
+};
+
 // Convert diffs to update paths
 const exploreUpdates = (obj, path = [], results = []) =>
   Object.entries(obj).reduce((results, [key, val]) => {
     const newPath = resolveUpdatePath(key, val, path);
+    if (optimizeUpdates(newPath, results)) return results;
     if (is.obj(val)) return exploreUpdates(val, newPath, results);
-    else if (isEmptySchema(val)) results.push(newPath);
+    else if (isEmptyValue(val)) results.push(newPath);
     else results.push([...newPath, val]);
     return results;
   }, results);
@@ -214,7 +227,7 @@ const makeBoundNode = (rootNode, schema, state, indexPath) => {
       node = child;
     } else if (child) {
       const renderResult = render(currentSchema, state);
-      if (isEmptySchema(renderResult)) removals.push(() => child.remove());
+      if (isEmptyValue(renderResult)) removals.push(() => child.remove());
       else child.replaceWith(renderResult);
       return [renderResult, removals];
     } else if (isNode.element(node)) {
@@ -227,7 +240,7 @@ const makeBoundNode = (rootNode, schema, state, indexPath) => {
 };
 
 const applyTopNodeUpdates = (node, schema, state) => {
-  if (isEmptySchema(schema)) {
+  if (isEmptyValue(schema)) {
     node.remove();
     return true;
   }
@@ -246,8 +259,9 @@ const applyNodeUpdates = (node, schema, updatePaths, state) => {
     const [prop, nestedProp, value] = propPath;
     const [boundNode, removals] = makeBoundNode(node, schema, state, indexPath);
     if (removals.length > 0) removeActions.push(...removals);
-    if (!boundNode || !nestedProp) continue;
+    if (!boundNode) continue;
     const actions = makeUpdateActions(boundNode, state);
+    if (!hasOwn(actions, prop)) continue;
     const action = actions[prop];
     const noVal = value === undefined;
     const val = noVal ? nestedProp : value;
@@ -341,7 +355,7 @@ const renderFragment = (schema, index, data) => {
   const nodes = (is.arr(data)
     ? data.map((datum) => render(schema, datum))
     : [render(schema, data)])
-  .filter((node) => !isEmptySchema(node));
+  .filter((node) => !isEmptyValue(node));
   // Then write
   fragment.append(start, ...nodes, end);
   return fragment;
@@ -349,7 +363,7 @@ const renderFragment = (schema, index, data) => {
 
 const prepareFragmentInsertion = (parentElement, fragment, index) => {
   const children = parentElement.childNodes;
-  // Index is preserved using swr-placeholder comment
+  // Index is preserved using swr-frag-placeholder comment
   const fragmentPlaceholder = children[index];
   return () => fragmentPlaceholder.replaceWith(fragment);
 };
@@ -366,14 +380,13 @@ const cleanSchema = (schema) => {
   if (!is.obj(schema)) return schema;
   if (is.arr(schema)) {
     return schema.reduce((acc, item) => {
-      if (!isEmptySchema(item)) acc.push(cleanSchema(item));
+      if (!isEmptyValue(item)) acc.push(cleanSchema(item));
       return acc;
     }, []);
   }
   const result = {};
-  for (const key in schema) {
-    let value = schema[key];
-    if (isEmptySchema(value)) continue;
+  for (const [key, value] of Object.entries(schema)) {
+    if (isEmptyValue(value)) continue;
     // Create new bindings to differ similar nodes
     if (is.fn(value)) result[key] = value.bind(schema);
     else result[key] = cleanSchema(value);
@@ -383,14 +396,15 @@ const cleanSchema = (schema) => {
 
 // Define schema to node update mapping
 const makeUpdateActions = (parentElement, defaultState) => ({
-  tag: (value) => replaceNode(parentElement, value),
+  // tag: (value) => replaceNode(parentElement, value),
   text: (value) => setElementText(parentElement, value),
+  classes: (value) => setElementAttr(parentElement, 'class', value),
   attrs: (value, nestedProp) => {
     if (nestedProp) setElementAttr(parentElement, nestedProp, value);
     else setElementAttrs(parentElement, value);
   },
   children: (value, nestedProp) => {
-    if (isEmptySchema(value)) return;
+    if (isEmptyValue(value)) return;
     let schema = value;
     let data = [defaultState];
     if (hasOwn(value, 'of')) {
@@ -414,8 +428,8 @@ const renderComponent = (rootNode, schema, bindings, state) => {
     // Render bound props
     for (const [propPath, binder] of binding) {
       const [prop, nestedProp] = propPath;
+      if (!hasOwn(actions, prop)) continue;
       const action = actions[prop];
-      if (!action) continue;
       const insertion = action(binder(state), nestedProp);
       if (insertion) fragmentInsertions.push(insertion);
     }
