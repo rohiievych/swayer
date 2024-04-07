@@ -5,6 +5,14 @@ import {
   FRAG_RANGE_END,
   FRAG_RANGE_START,
   NODE_SCHEMA,
+  SCHEMA_ARGS_DATA,
+  SCHEMA_ATTRS,
+  SCHEMA_CHILDREN,
+  SCHEMA_CLASSES,
+  SCHEMA_COMPONENT,
+  SCHEMA_OF_DATA,
+  SCHEMA_TAG,
+  SCHEMA_TEXT,
 } from './constants.js';
 import { camelToKebabCase, hasOwn, is } from './utils.js';
 
@@ -21,7 +29,7 @@ const checkNode = (node, schema) => {
   if (isTxtNode && is.basic(schema)) {
     return node.textContent === schema.toString();
   }
-  return node.nodeName.toLowerCase() === schema.tag;
+  return node.nodeName.toLowerCase() === schema[SCHEMA_TAG];
 };
 
 const isEmptyValue = (value) => is.nullish(value)
@@ -107,7 +115,7 @@ const createComponent = (schema) => {
     if (is.fn(schema)) {
       const indices = indexPath.slice(0, -1);
       const startIndex = indexPath[indexPath.length - 1];
-      binding.set(['children', startIndex], schema);
+      binding.set([SCHEMA_CHILDREN, startIndex], schema);
       bindings.set(indices, binding);
       appendFragmentPlaceholder(parentElement);
       continue;
@@ -115,33 +123,39 @@ const createComponent = (schema) => {
     // Primitive schemas (strings, numbers, symbols)
     if (is.basic(schema)) {
       const text = document.createTextNode(schema);
-      binding.set(['text'], schema);
+      binding.set([SCHEMA_TEXT], schema);
       setElementText(text, schema);
       parentElement.append(text);
       continue;
     }
 
-    const element = document.createElement(schema.tag);
-    const { text, attrs, classes } = schema;
+    const {
+      [SCHEMA_TAG]: tag,
+      [SCHEMA_TEXT]: text,
+      [SCHEMA_ATTRS]: attrs,
+      [SCHEMA_CLASSES]: classes,
+      [SCHEMA_CHILDREN]: children,
+    } = schema;
 
-    if (is.fn(text)) binding.set(['text'], text);
+    const element = document.createElement(tag);
+
+    if (is.fn(text)) binding.set([SCHEMA_TEXT], text);
     else setElementText(element, text);
 
     if (is.fn(attrs)) {
-      binding.set(['attrs'], attrs);
+      binding.set([SCHEMA_ATTRS], attrs);
     } else if (is.obj(attrs)) {
       for (const [attr, value] of Object.entries(attrs)) {
-        if (is.fn(value)) binding.set(['attrs', attr], value);
+        if (is.fn(value)) binding.set([SCHEMA_ATTRS, attr], value);
         else setElementAttr(element, attr, value);
       }
     }
 
-    if (is.fn(classes)) binding.set(['classes'], classes);
+    if (is.fn(classes)) binding.set([SCHEMA_CLASSES], classes);
     else if (is.str(classes)) setElementAttr(element, 'class', classes);
 
-    const children = schema.children;
     if (is.fn(children)) {
-      binding.set(['children'], children);
+      binding.set([SCHEMA_CHILDREN], children);
       appendFragmentPlaceholder(element);
 
     } else if (is.arr(children)) {
@@ -164,7 +178,7 @@ const createComponent = (schema) => {
 
 // Skip 'children' path segment if children is obj or arr
 const resolveUpdatePath = (prop, value, path) => {
-  if (prop === 'children') {
+  if (prop === SCHEMA_CHILDREN) {
     if (is.arr(value) || is.obj(value)) return path;
   }
   return [...path, prop];
@@ -176,7 +190,7 @@ const optimizeUpdates = (path, results) => {
   const len = results.length;
   if (len === 0) return false;
   const lastUpdate = results[len - 1];
-  const tagIndex = lastUpdate.indexOf('tag');
+  const tagIndex = lastUpdate.indexOf(SCHEMA_TAG);
   if (tagIndex > -1) {
     const tagPath = lastUpdate.slice(0, tagIndex);
     return tagPath.every((item, index) => item === path[index]);
@@ -219,23 +233,23 @@ const makeBoundNode = (rootNode, schema, state, indexPath) => {
   // Collect removals to prevent incorrect childNode indexing
   const removals = [];
   let node = rootNode;
-  let currentSchema = schema;
+  let curSchema = schema;
   for (const index of indexPath) {
-    if (is.arr(currentSchema)) {
-      currentSchema = currentSchema[index];
-    } else if (is.obj(currentSchema) && hasOwn(currentSchema, 'children')) {
-      currentSchema = currentSchema.children[index];
+    if (is.arr(curSchema)) {
+      curSchema = curSchema[index];
+    } else if (is.obj(curSchema) && hasOwn(curSchema, SCHEMA_CHILDREN)) {
+      curSchema = curSchema[SCHEMA_CHILDREN][index];
     }
     const child = node.childNodes[index];
-    if (checkNode(child, currentSchema)) {
+    if (checkNode(child, curSchema)) {
       node = child;
     } else if (child) {
-      const renderResult = render(currentSchema, state);
+      const renderResult = render(curSchema, state);
       if (isEmptyValue(renderResult)) removals.push(() => child.remove());
       else child.replaceWith(renderResult);
       return [renderResult, removals];
     } else if (isNode.element(node)) {
-      const renderResult = render(currentSchema, state);
+      const renderResult = render(curSchema, state);
       node.append(renderResult);
       return [renderResult, removals];
     }
@@ -400,22 +414,21 @@ const cleanSchema = (schema) => {
 
 // Define schema to node update mapping
 const makeUpdateActions = (parentElement, defaultState) => ({
-  // tag: (value) => replaceNode(parentElement, value),
-  text: (value) => setElementText(parentElement, value),
-  classes: (value) => setElementAttr(parentElement, 'class', value),
-  attrs: (value, nestedProp) => {
+  [SCHEMA_TEXT]: (value) => setElementText(parentElement, value),
+  [SCHEMA_CLASSES]: (value) => setElementAttr(parentElement, 'class', value),
+  [SCHEMA_ATTRS]: (value, nestedProp) => {
     if (nestedProp) setElementAttr(parentElement, nestedProp, value);
     else setElementAttrs(parentElement, value);
   },
-  children: (value, nestedProp) => {
+  [SCHEMA_CHILDREN]: (value, nestedProp) => {
     if (isEmptyValue(value)) return;
     let schema = value;
     let data = [defaultState];
-    if (hasOwn(value, 'of')) {
-      ({ schema, of: data } = value);
-    } else if (hasOwn(value, 'args')) {
-      ({ schema } = value);
-      data = [value.args];
+    if (hasOwn(value, SCHEMA_OF_DATA)) {
+      ({ [SCHEMA_COMPONENT]: schema, [SCHEMA_OF_DATA]: data } = value);
+    } else if (hasOwn(value, SCHEMA_ARGS_DATA)) {
+      ({ [SCHEMA_COMPONENT]: schema } = value);
+      data = [value[SCHEMA_ARGS_DATA]];
     }
     const cleanedSchema = cleanSchema(schema);
     const index = nestedProp || 0;
