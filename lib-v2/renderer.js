@@ -170,14 +170,18 @@ const resolveUpdatePath = (prop, value, path) => {
   return [...path, prop];
 };
 
-// Do not include deep updates if parent tag is changed
+// Skip deep updates if parent tag is changed
 // This reduces unnecessary updates as parent is fully replaced
 const optimizeUpdates = (path, results) => {
   const len = results.length;
   if (len === 0) return false;
-  const [index, prop] = results[len - 1];
-  const nextIndex = path[0];
-  return index === nextIndex && prop === 'tag';
+  const lastUpdate = results[len - 1];
+  const tagIndex = lastUpdate.indexOf('tag');
+  if (tagIndex > -1) {
+    const tagPath = lastUpdate.slice(0, tagIndex);
+    return tagPath.every((item, index) => item === path[index]);
+  }
+  return false;
 };
 
 // Convert diffs to update paths

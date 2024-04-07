@@ -93,8 +93,8 @@ const example = {
       tag: 'tbody',
       // children: ({ data, row }) => row === 'row1' ? r1 : r2,
       children: ({ data, row }) => ({
-        // schema: [row === 'row1' ? div : div2, { tag: 'hr' }],
-        schema: row === 'row1' ? fragRow : fragRow[0],
+        schema: [row === 'row1' ? div : div2, { tag: 'hr' }],
+        // schema: row === 'row1' ? fragRow : fragRow[0],
         of: data,
         // of: row === 'row1' ? data.slice(0, 10) : data.slice(0, 5),
       }),
