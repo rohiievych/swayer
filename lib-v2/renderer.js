@@ -81,20 +81,40 @@ const appendFragmentPlaceholder = (parentElement) => {
   parentElement.append(fragmentPlaceholder);
 };
 
-// STAGE 1: render component template
-const createComponent = (schema) => {
+// Remove empty schema values
+const cleanseSchema = (schema) => {
+  if (!is.obj(schema)) return schema;
+  if (is.arr(schema)) {
+    return schema.reduce((acc, item) => {
+      if (!isEmptyValue(item)) acc.push(cleanseSchema(item));
+      return acc;
+    }, []);
+  }
+  const result = {};
+  for (const [key, value] of Object.entries(schema)) {
+    if (isEmptyValue(value)) continue;
+    // Create new bindings to differ similar nodes
+    if (is.fn(value)) result[key] = value.bind(schema);
+    else result[key] = cleanseSchema(value);
+  }
+  return result;
+};
+
+// STAGE 1: render DOM node template
+const createNodeTemplate = (schemaInput) => {
+  const templateSchema = cleanseSchema(schemaInput);
   let templateNode;
 
   /** @type {any} */
   let stack = [{
-    schema,
+    schema: templateSchema,
     parentElement: null,
     indexPath: [],
   }];
 
-  if (is.arr(schema)) {
+  if (is.arr(templateSchema)) {
     templateNode = new DocumentFragment();
-    stack = schema.map((schemaItem, i) => ({
+    stack = templateSchema.map((schemaItem, i) => ({
       schema: schemaItem,
       parentElement: templateNode,
       indexPath: [i],
@@ -105,8 +125,6 @@ const createComponent = (schema) => {
 
   while (stack.length > 0) {
     const { schema, parentElement, indexPath } = stack.pop();
-
-    if (isEmptyValue(schema)) continue;
 
     // Collect bindings
     const binding = new Map();
@@ -173,7 +191,7 @@ const createComponent = (schema) => {
     else templateNode = element;
   }
 
-  return { templateNode, bindings };
+  return { templateSchema, templateNode, bindings };
 };
 
 // Skip 'children' path segment if children is obj or arr
@@ -370,10 +388,9 @@ const renderFragment = (schema, index, data) => {
   const start = new Comment(`${FRAG_RANGE_START}:${index}`);
   const end = new Comment(`${FRAG_RANGE_END}:${index}`);
   // First read
-  const nodes = (is.arr(data)
-    ? data.map((datum) => render(schema, datum))
-    : [render(schema, data)])
-  .filter((node) => !isEmptyValue(node));
+  const nodes = data
+    .map((datum) => render(schema, datum))
+    .filter((node) => !isEmptyValue(node));
   // Then write
   fragment.append(start, ...nodes, end);
   return fragment;
@@ -387,29 +404,11 @@ const prepareFragmentInsertion = (parentElement, fragment, index) => {
 };
 
 const renderChildren = (schema, parentElement, fragmentIndex, data) => {
+  const templateSchema = cleanseSchema(schema);
   const range = getFragmentRange(parentElement, fragmentIndex);
-  if (range) return updateFragment(schema, parentElement, data, range);
-  const fragment = renderFragment(schema, fragmentIndex, data);
+  if (range) return updateFragment(templateSchema, parentElement, data, range);
+  const fragment = renderFragment(templateSchema, fragmentIndex, data);
   return prepareFragmentInsertion(parentElement, fragment, fragmentIndex);
-};
-
-// Remove empty schema values
-const cleanSchema = (schema) => {
-  if (!is.obj(schema)) return schema;
-  if (is.arr(schema)) {
-    return schema.reduce((acc, item) => {
-      if (!isEmptyValue(item)) acc.push(cleanSchema(item));
-      return acc;
-    }, []);
-  }
-  const result = {};
-  for (const [key, value] of Object.entries(schema)) {
-    if (isEmptyValue(value)) continue;
-    // Create new bindings to differ similar nodes
-    if (is.fn(value)) result[key] = value.bind(schema);
-    else result[key] = cleanSchema(value);
-  }
-  return result;
 };
 
 // Define schema to node update mapping
@@ -430,13 +429,12 @@ const makeUpdateActions = (parentElement, defaultState) => ({
       ({ [SCHEMA_COMPONENT]: schema } = value);
       data = [value[SCHEMA_ARGS_DATA]];
     }
-    const cleanedSchema = cleanSchema(schema);
     const index = nestedProp || 0;
-    return renderChildren(cleanedSchema, parentElement, index, data);
+    return renderChildren(schema, parentElement, index, data);
   },
 });
 
-// STAGE 2: render component bindings
+// STAGE 2: render component with bindings
 const renderComponent = (rootNode, schema, bindings, state) => {
   const fragmentInsertions = [];
   for (const [indexPath, binding] of bindings) {
@@ -456,31 +454,30 @@ const renderComponent = (rootNode, schema, bindings, state) => {
   return rootNode;
 };
 
-const componentTemplates = new WeakMap();
+const templateCache = new WeakMap();
 
-const getComponent = (schema) => {
-  const component = componentTemplates.get(schema);
-  if (component) return component;
-  const newComponent = createComponent(schema);
-  componentTemplates.set(schema, newComponent);
-  return newComponent;
+const getTemplate = (schemaInput) => {
+  let template = templateCache.get(schemaInput);
+  if (template) return template;
+  template = createNodeTemplate(schemaInput);
+  templateCache.set(schemaInput, template);
+  return template;
 };
 
-const assignComponentSchema = (node, schema) => {
+const assignNodeSchema = (node, schema) => {
   if (hasOwn(node, NODE_SCHEMA)) return;
-  const cleanedSchema = cleanSchema(schema);
-  node[NODE_SCHEMA] = cleanedSchema;
+  node[NODE_SCHEMA] = schema;
   if (node.constructor.name === 'DocumentFragment') {
     const children = node.childNodes;
     const len = children.length;
-    for (let i = 0; i < len; ++i) children[i][NODE_SCHEMA] = cleanedSchema;
+    for (let i = 0; i < len; ++i) children[i][NODE_SCHEMA] = schema;
   }
 };
 
-export const render = (schema, state, rootNode) => {
-  if (is.nullish(schema) || is.basic(schema)) return schema;
-  const { templateNode, bindings } = getComponent(schema);
-  const componentNode = rootNode || templateNode.cloneNode(true);
-  assignComponentSchema(componentNode, schema);
-  return renderComponent(componentNode, schema, bindings, state);
+export const render = (schemaInput, state, rootNode) => {
+  if (!is.obj(schemaInput)) return schemaInput;
+  const { templateSchema, templateNode, bindings } = getTemplate(schemaInput);
+  const node = rootNode || templateNode.cloneNode(true);
+  assignNodeSchema(node, templateSchema);
+  return renderComponent(node, templateSchema, bindings, state);
 };
