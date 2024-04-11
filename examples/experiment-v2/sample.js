@@ -306,7 +306,7 @@ const createItem = (add = 0) => (_, i) => ({
   label: `Item ${1 + i + add}`,
 });
 
-createBtn.addEventListener('click', () => {
+const createFn = () => {
   const exampleElement = document.querySelector('#example-1');
   const state = {
     data: createArray().map(createItem()),
@@ -314,9 +314,9 @@ createBtn.addEventListener('click', () => {
   };
   const resultEl = render(example, state, exampleElement);
   if (!exampleElement) root.append(resultEl);
-});
+};
 
-updateBtn.addEventListener('click', () => {
+const updateFn = () => {
   const exampleElement2 = document.querySelector('#example-2');
   const state2 = {
     // data: createArray().map(createItem(100)),
@@ -329,9 +329,9 @@ updateBtn.addEventListener('click', () => {
   };
   const resultEl = render(example2, state2, exampleElement2);
   if (!exampleElement2) root.append(resultEl);
-});
+};
 
-deleteBtn.addEventListener('click', () => {
+const deleteFn = () => {
   const exampleElement = document.querySelector('#example-1');
   const state = { data: [] };
   render(example, state, exampleElement);
@@ -339,4 +339,8 @@ deleteBtn.addEventListener('click', () => {
   const exampleElement2 = document.querySelector('#example-2');
   const state2 = { fruits: [] };
   render(example2, state2, exampleElement2);
-});
+};
+
+createBtn.addEventListener('click', createFn);
+updateBtn.addEventListener('click', updateFn);
+deleteBtn.addEventListener('click', deleteFn);
