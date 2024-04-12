@@ -211,7 +211,7 @@ const optimizeUpdates = (path, results) => {
   const tagIndex = lastUpdate.indexOf(SCHEMA_TAG);
   if (tagIndex > -1) {
     const tagPath = lastUpdate.slice(0, tagIndex);
-    if (tagPath.length !== path.length) return false;
+    if (tagPath.length === 0) return false;
     return tagPath.every((item, index) => item === path[index]);
   }
   return false;
