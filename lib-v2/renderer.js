@@ -9,7 +9,7 @@ import {
   SCHEMA_ATTRS,
   SCHEMA_CHILDREN,
   SCHEMA_CLASSES,
-  SCHEMA_COMPONENT,
+  SCHEMA_COMPONENT, SCHEMA_MODEL, SCHEMA_MODEL_STATE,
   SCHEMA_OF_DATA,
   SCHEMA_TAG,
   SCHEMA_TEXT,
@@ -204,7 +204,7 @@ const resolveUpdatePath = (prop, value, path) => {
 
 // Skip deep updates if parent tag is changed
 // This reduces unnecessary updates as parent is fully replaced
-const optimizeUpdates = (path, results) => {
+const shouldOptimizeUpdates = (path, results) => {
   const len = results.length;
   if (len === 0) return false;
   const lastUpdate = results[len - 1];
@@ -221,7 +221,7 @@ const optimizeUpdates = (path, results) => {
 const exploreUpdates = (obj, path = [], results = []) =>
   Object.entries(obj).reduce((results, [key, val]) => {
     const newPath = resolveUpdatePath(key, val, path);
-    if (optimizeUpdates(newPath, results)) return results;
+    if (shouldOptimizeUpdates(newPath, results)) return results;
     if (is.obj(val)) return exploreUpdates(val, newPath, results);
     else if (isEmptyValue(val)) results.push(newPath);
     else results.push([...newPath, val]);
@@ -240,6 +240,9 @@ const splitUpdatePath = (updatePath) => {
   return [indexPaths, []];
 };
 
+// todo resolve nested range identifiers
+// todo resolve a problem why schema child function is not diffed
+
 // Get schema diffs
 const getUpdatePaths = (prevSchema, curSchema) => {
   const diffs = diff(prevSchema, curSchema);
@@ -248,7 +251,7 @@ const getUpdatePaths = (prevSchema, curSchema) => {
 };
 
 // Make element in fragment by index path
-const makeBoundNode = (rootNode, schema, state, indexPath) => {
+const makeBoundNode = (rootNode, schema, stateItem, indexPath) => {
   // Collect removals to prevent incorrect childNode indexing
   const removals = [];
   let node = rootNode;
@@ -259,16 +262,18 @@ const makeBoundNode = (rootNode, schema, state, indexPath) => {
     } else if (is.obj(curSchema) && hasOwn(curSchema, SCHEMA_CHILDREN)) {
       curSchema = curSchema[SCHEMA_CHILDREN][index];
     }
+    // todo resolve a problem with identifying correct child
+    //  if there are any ranges
     const child = node.childNodes[index];
     if (checkNode(child, curSchema)) {
       node = child;
     } else if (child) {
-      const renderResult = render(curSchema, state);
+      const renderResult = render(curSchema, stateItem);
       if (isEmptyValue(renderResult)) removals.push(() => child.remove());
       else child.replaceWith(renderResult);
       return [renderResult, removals];
     } else if (isNode.element(node)) {
-      const renderResult = render(curSchema, state);
+      const renderResult = render(curSchema, stateItem);
       node.append(renderResult);
       return [renderResult, removals];
     }
@@ -276,34 +281,37 @@ const makeBoundNode = (rootNode, schema, state, indexPath) => {
   return [node, removals];
 };
 
-const applyTopNodeUpdates = (node, schema, state) => {
+const applyTopNodeUpdates = (node, schema, stateItem) => {
   if (isEmptyValue(schema)) {
     node.remove();
     return true;
   }
   if (!checkNode(node, schema)) {
-    const newNode = render(schema, state);
+    const newNode = render(schema, stateItem);
     node.replaceWith(newNode);
     return true;
   }
   return false;
 };
 
-const applyNodeUpdates = (node, schema, updatePaths, state) => {
+const applyNodeUpdates = (node, schema, updatePaths, stateItem) => {
   const removeActions = [];
   for (const path of updatePaths) {
     const [indexPath, propPath] = path;
     const [prop, nestedProp, value] = propPath;
-    const [boundNode, removals] = makeBoundNode(node, schema, state, indexPath);
+    const [boundNode, removals] = makeBoundNode(
+      node, schema, stateItem, indexPath,
+    );
     if (removals.length > 0) removeActions.push(...removals);
     if (!boundNode) continue;
-    const actions = makeUpdateActions(boundNode, state);
+    const actions = makeUpdateActions(boundNode, stateItem);
     if (!hasOwn(actions, prop)) continue;
     const action = actions[prop];
     const noVal = value === undefined;
     const val = noVal ? nestedProp : value;
     const nested = noVal ? undefined : nestedProp;
-    const updatedVal = is.fn(val) ? val(state) : val;
+    const { state, index, array } = stateItem;
+    const updatedVal = is.fn(val) ? val(state, index, array) : val;
     const updateChildren = action(updatedVal, nested);
     // Replaces existing node with fragment
     if (updateChildren) updateChildren();
@@ -311,9 +319,9 @@ const applyNodeUpdates = (node, schema, updatePaths, state) => {
   for (const action of removeActions) action();
 };
 
-const updateFragment = (inputSchema, parentNode, data, fragRange) => {
+const updateFragment = (inputSchema, parentNode, stateArray, fragRange) => {
   const children = parentNode.childNodes;
-  const dataLength = data.length;
+  const dataLength = stateArray.length;
   const schemas = is.arr(inputSchema) ? inputSchema : [inputSchema];
   const schemasLength = schemas.length;
   const { startOffset, endOffset } = fragRange;
@@ -322,7 +330,7 @@ const updateFragment = (inputSchema, parentNode, data, fragRange) => {
   let end = start;
   // Update nodes
   for (let i = 0; i < dataLength; ++i) {
-    const state = data[i];
+    const stateItem = createStateItem(stateArray[i], i, stateArray);
     let schemaIndex = 0;
     start = i * schemasLength + startOffset;
     end = start + schemasLength;
@@ -334,13 +342,13 @@ const updateFragment = (inputSchema, parentNode, data, fragRange) => {
       if (start + schemaIndex >= endOffset || !childNode) {
         // Append only remaining part of schemas
         const part = schemaIndex > 0 ? schemas.slice(schemaIndex) : schemas;
-        const newNode = render(part, state);
+        const newNode = render(part, stateItem);
         if (newNode) fragEndNode.before(newNode);
         break;
       }
       const schema = schemas[schemaIndex];
       // Apply high level replacements
-      const isApplied = applyTopNodeUpdates(childNode, schema, state);
+      const isApplied = applyTopNodeUpdates(childNode, schema, stateItem);
       if (isApplied) continue;
       const prevSchemas = childNode[NODE_SCHEMA];
       const prevSchema = is.arr(prevSchemas)
@@ -348,7 +356,7 @@ const updateFragment = (inputSchema, parentNode, data, fragRange) => {
         : prevSchemas;
       const updatePaths = getUpdatePaths(prevSchema, schema);
       // Apply updates
-      applyNodeUpdates(childNode, schema, updatePaths, state);
+      applyNodeUpdates(childNode, schema, updatePaths, stateItem);
       // Update node schema
       childNode[NODE_SCHEMA] = inputSchema;
     }
@@ -369,7 +377,7 @@ const getFragmentRange = (parentElement, index) => {
   let range;
   for (let i = 0; i < nodesLength; ++i) {
     const child = nodes[i];
-    if (!isNode.comment(child) && child.data !== FRAG_PLACEHOLDER) continue;
+    if (!isNode.comment(child) || child.data === FRAG_PLACEHOLDER) continue;
     const [marker, fragIndex] = child.data.split(':');
     if (+fragIndex !== index) continue;
     if (marker === FRAG_RANGE_START) {
@@ -383,14 +391,17 @@ const getFragmentRange = (parentElement, index) => {
   return range;
 };
 
-const renderFragment = (schema, index, data) => {
+const renderFragment = (schema, index, stateArray) => {
   const fragment = new DocumentFragment();
   // Mark fragment
   const start = new Comment(`${FRAG_RANGE_START}:${index}`);
   const end = new Comment(`${FRAG_RANGE_END}:${index}`);
   // First read
-  const nodes = data
-    .map((datum) => render(schema, datum))
+  const nodes = stateArray
+    .map((state, index, array) => {
+      const stateItem = createStateItem(state, index, array);
+      return render(schema, stateItem);
+    })
     .filter((node) => !isEmptyValue(node));
   // Then write
   fragment.append(start, ...nodes, end);
@@ -404,16 +415,16 @@ const prepareFragmentInsertion = (parentElement, fragment, index) => {
   return () => fragmentPlaceholder.replaceWith(fragment);
 };
 
-const renderChildren = (schema, parentElement, fragmentIndex, data) => {
-  const templateSchema = cleanseSchema(schema);
+const renderChildren = (schema, parentElement, fragmentIndex, stateArray) => {
+  const tplSchema = cleanseSchema(schema);
   const range = getFragmentRange(parentElement, fragmentIndex);
-  if (range) return updateFragment(templateSchema, parentElement, data, range);
-  const fragment = renderFragment(templateSchema, fragmentIndex, data);
+  if (range) return updateFragment(tplSchema, parentElement, stateArray, range);
+  const fragment = renderFragment(tplSchema, fragmentIndex, stateArray);
   return prepareFragmentInsertion(parentElement, fragment, fragmentIndex);
 };
 
 // Define schema to node update mapping
-const makeUpdateActions = (parentElement, defaultState) => ({
+const makeUpdateActions = (parentElement, defaultStateItem) => ({
   [SCHEMA_TEXT]: (value) => setElementText(parentElement, value),
   [SCHEMA_CLASSES]: (value) => setElementAttr(parentElement, 'class', value),
   [SCHEMA_ATTRS]: (value, nestedProp) => {
@@ -423,30 +434,32 @@ const makeUpdateActions = (parentElement, defaultState) => ({
   [SCHEMA_CHILDREN]: (value, nestedProp) => {
     if (isEmptyValue(value)) return;
     let schema = value;
-    let data = [defaultState];
+    let stateArray = [defaultStateItem.state];
     if (hasOwn(value, SCHEMA_OF_DATA)) {
-      ({ [SCHEMA_COMPONENT]: schema, [SCHEMA_OF_DATA]: data } = value);
+      ({ [SCHEMA_COMPONENT]: schema, [SCHEMA_OF_DATA]: stateArray } = value);
     } else if (hasOwn(value, SCHEMA_ARGS_DATA)) {
       ({ [SCHEMA_COMPONENT]: schema } = value);
-      data = [value[SCHEMA_ARGS_DATA]];
+      stateArray = [value[SCHEMA_ARGS_DATA]];
     }
     const index = nestedProp || 0;
-    return renderChildren(schema, parentElement, index, data);
+    return renderChildren(schema, parentElement, index, stateArray);
   },
 });
 
 // STAGE 2: render component with bindings
-const renderComponent = (rootNode, schema, bindings, state) => {
+const renderComponent = (rootNode, schema, bindings, stateItem) => {
   const fragmentInsertions = [];
   for (const [indexPath, binding] of bindings) {
-    const [parentNode] = makeBoundNode(rootNode, schema, state, indexPath);
-    const actions = makeUpdateActions(parentNode, state);
+    const [parentNode] = makeBoundNode(rootNode, schema, stateItem, indexPath);
+    const actions = makeUpdateActions(parentNode, stateItem);
     // Render bound props
     for (const [propPath, binder] of binding) {
       const [prop, nestedProp] = propPath;
       if (!hasOwn(actions, prop)) continue;
       const action = actions[prop];
-      const insertion = action(binder(state), nestedProp);
+      const { state, index, array } = stateItem;
+      const value = binder(state, index, array);
+      const insertion = action(value, nestedProp);
       if (insertion) fragmentInsertions.push(insertion);
     }
   }
@@ -475,10 +488,30 @@ const assignNodeSchema = (node, schema) => {
   }
 };
 
-export const render = (schemaInput, state, rootNode) => {
+const createStateItem = (state, stateIndex, stateArray) => ({
+  state,
+  index: stateIndex,
+  array: stateArray,
+});
+
+const constructModelState = (schema, stateItem) => {
+  const hasModel = hasOwn(schema, SCHEMA_MODEL);
+  if (!hasModel) return stateItem;
+  const args = [];
+  if (stateItem) args.push(stateItem.state, stateItem.index, stateItem.array);
+  const model = Reflect.construct(schema[SCHEMA_MODEL], args);
+  return {
+    state: model[SCHEMA_MODEL_STATE],
+    index: stateItem?.index,
+    array: stateItem?.array,
+  };
+};
+
+export const render = (schemaInput, stateItem, rootNode) => {
   if (!is.obj(schemaInput)) return schemaInput;
   const { templateSchema, templateNode, bindings } = getTemplate(schemaInput);
   const node = rootNode || templateNode.cloneNode(true);
+  const modelStateItem = constructModelState(templateSchema, stateItem);
   assignNodeSchema(node, templateSchema);
-  return renderComponent(node, templateSchema, bindings, state);
+  return renderComponent(node, templateSchema, bindings, modelStateItem);
 };

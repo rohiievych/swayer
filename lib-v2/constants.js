@@ -22,6 +22,8 @@ export const SCHEMA_CLASSES = 'classes';
 export const SCHEMA_CHILDREN = 'children';
 // Schema model prop name
 export const SCHEMA_MODEL = 'model';
+// Schema model state prop name
+export const SCHEMA_MODEL_STATE = 'state';
 // Component schema prop name
 export const SCHEMA_COMPONENT = 'schema';
 // Component schema loop data array prop name

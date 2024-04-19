@@ -1,11 +1,32 @@
 import { render } from '../../lib-v2/renderer.js';
 
+let addd = 0;
+setTimeout(() => addd += 1000, 3000);
+const createArray = (num = 1000) => new Array(num).fill(null);
+const createItem = (add = addd) => (_, i) => ({
+  id: 1 + i + add,
+  label: `Item ${1 + i + add}`,
+});
+
+class ModelSampleChild {
+
+  constructor(...args) {
+    console.log({ args });
+  }
+
+  state = {
+    ok: true,
+  };
+}
+
 const div = {
   tag: 'div',
+  // model: ModelSampleChild,
+  // model: (state) => ({ state }),
   children: [
-    { tag: 'p', text: 'I am p element 1' },
+    (state) => `I am span 1.1 ${state.label}`,
+    { tag: 'p', text: (state) => `I am p element ${state.id}` },
     'I am span 1',
-    'I am span 1.1',
     'I am span 1.2',
     '',
     '',
@@ -84,8 +105,16 @@ const actionBtn = {
   text: (state) => state.text,
 };
 
+class ModelSample {
+  state = {
+    data: createArray().map(createItem()),
+    row: 'row1',
+  };
+}
+
 const example = {
   tag: 'table',
+  model: ModelSample,
   attrs: () => ({ id: 'example-1' }),
   classes: 'table table-hover table-striped test-data',
   children: [
@@ -243,14 +272,28 @@ const frag = [
     tag: 'h4',
     text: (state) => state.name,
   },
+  () => 'TESSESET',
   {
     tag: 'p',
     text: (state) => state.description,
   },
 ];
 
+class FruitsClass {
+  state = {
+    // data: createArray().map(createItem(100)),
+    // row: 'row2',
+    fruits: [
+      { name: 'Apple', description: 'Green apple' },
+      { name: 'Pear', description: 'Tasty fruit' },
+    ],
+    isUpdate: !!document.querySelector('#example-2'),
+  };
+}
+
 const example2 = {
   tag: 'main',
+  model: FruitsClass,
   attrs: () => ({ id: 'example-2' }),
   children: [
     {
@@ -300,34 +343,15 @@ const updateBtn = document.getElementById('update');
 /** @type {any} */
 const deleteBtn = document.getElementById('delete');
 
-const createArray = (num = 1000) => new Array(num).fill(null);
-const createItem = (add = 0) => (_, i) => ({
-  id: 1 + i + add,
-  label: `Item ${1 + i + add}`,
-});
-
 const createFn = () => {
   const exampleElement = document.querySelector('#example-1');
-  const state = {
-    data: createArray().map(createItem()),
-    row: exampleElement ? 'row1' : 'row2',
-  };
-  const resultEl = render(example, state, exampleElement);
+  const resultEl = render(example, undefined, exampleElement);
   if (!exampleElement) root.append(resultEl);
 };
 
 const updateFn = () => {
   const exampleElement2 = document.querySelector('#example-2');
-  const state2 = {
-    // data: createArray().map(createItem(100)),
-    // row: 'row2',
-    fruits: [
-      { name: 'Apple', description: 'Green apple' },
-      { name: 'Pear', description: 'Tasty fruit' },
-    ],
-    isUpdate: !!exampleElement2,
-  };
-  const resultEl = render(example2, state2, exampleElement2);
+  const resultEl = render(example2, undefined, exampleElement2);
   if (!exampleElement2) root.append(resultEl);
 };
 
