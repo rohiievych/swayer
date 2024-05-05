@@ -24,7 +24,21 @@ const div = {
   // model: ModelSampleChild,
   // model: (state) => ({ state }),
   children: [
-    (state) => `I am span 1.1 ${state.label}`,
+    (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
+    (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
+    (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
+    (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
+    (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
+    (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
+    (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
+    (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
+    (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
+    (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
+    (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
+    (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
+    (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
+    (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
+    (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
     { tag: 'p', text: (state) => `I am p element ${state.id}` },
     'I am span 1',
     'I am span 1.2',
@@ -277,6 +291,7 @@ const frag = [
     tag: 'p',
     text: (state) => state.description,
   },
+  { tag: 'hr' },
 ];
 
 class FruitsClass {

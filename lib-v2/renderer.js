@@ -20,6 +20,7 @@ const isNode = {
   text: (node) => node.nodeType === Node.TEXT_NODE,
   element: (node) => node.nodeType === Node.ELEMENT_NODE,
   comment: (node) => node.nodeType === Node.COMMENT_NODE,
+  fragment: (node) => node.constructor.name === 'DocumentFragment',
 };
 
 // Check if node corresponds to schema tag or text
@@ -240,7 +241,6 @@ const splitUpdatePath = (updatePath) => {
   return [indexPaths, []];
 };
 
-// todo resolve nested range identifiers
 // todo resolve a problem why schema child function is not diffed
 
 // Get schema diffs
@@ -248,6 +248,25 @@ const getUpdatePaths = (prevSchema, curSchema) => {
   const diffs = diff(prevSchema, curSchema);
   const updatePaths = exploreUpdates(diffs);
   return updatePaths.map(splitUpdatePath);
+};
+
+const getChildNodeByFragIndex = (nodes, fragmentIndex) => {
+  const nodesLen = nodes.length;
+  let currentIndex = -1;
+  for (let i = 0; i < nodesLen; i++) {
+    ++currentIndex;
+    const node = nodes[i];
+    if (isNode.comment(node) && node.data !== FRAG_PLACEHOLDER) {
+      // Skip nodes fragment like it's single node
+      if (node.data.startsWith(FRAG_RANGE_START)) {
+        const { length: fragNodesLength } = parseCommentData(node.data);
+        i += fragNodesLength + 1;
+      }
+      continue;
+    }
+    if (currentIndex === fragmentIndex) return node;
+  }
+  return null;
 };
 
 // Make element in fragment by index path
@@ -262,9 +281,15 @@ const makeBoundNode = (rootNode, schema, stateItem, indexPath) => {
     } else if (is.obj(curSchema) && hasOwn(curSchema, SCHEMA_CHILDREN)) {
       curSchema = curSchema[SCHEMA_CHILDREN][index];
     }
-    // todo resolve a problem with identifying correct child
-    //  if there are any ranges
-    const child = node.childNodes[index];
+
+    // todo optimize
+    const range = getFragmentRange(node, index);
+    if (range) {
+      updateFragment(curSchema, node, stateItem, range);
+      return [node, removals];
+    }
+
+    const child = getChildNodeByFragIndex(node.childNodes, index);
     if (checkNode(child, curSchema)) {
       node = child;
     } else if (child) {
@@ -321,10 +346,11 @@ const applyNodeUpdates = (node, schema, updatePaths, stateItem) => {
 
 const updateFragment = (inputSchema, parentNode, stateArray, fragRange) => {
   const children = parentNode.childNodes;
+  stateArray = is.arr(stateArray) ? stateArray : [stateArray];
   const dataLength = stateArray.length;
   const schemas = is.arr(inputSchema) ? inputSchema : [inputSchema];
   const schemasLength = schemas.length;
-  const { startOffset, endOffset } = fragRange;
+  let { startOffset, endOffset } = fragRange;
   const fragEndNode = children[endOffset];
   let start = startOffset;
   let end = start;
@@ -336,7 +362,7 @@ const updateFragment = (inputSchema, parentNode, stateArray, fragRange) => {
     end = start + schemasLength;
     // Iterate fragment nodes
     for (let j = start; j < end; ++j) {
-      const childNode = children[j];
+      let childNode = children[j];
       schemaIndex = j - start;
       // Append new nodes to fragment if schemas run out of range
       if (start + schemaIndex >= endOffset || !childNode) {
@@ -346,7 +372,24 @@ const updateFragment = (inputSchema, parentNode, stateArray, fragRange) => {
         if (newNode) fragEndNode.before(newNode);
         break;
       }
-      const schema = schemas[schemaIndex];
+      let schema = schemas[schemaIndex];
+
+      // todo provide testing for nested ranges
+
+      // Update nested fragments
+      const range = getRange(childNode);
+      if (range) {
+        const offset = range.endOffset - range.startOffset + 1;
+        start += offset;
+        startOffset += offset;
+        end += offset;
+        j += offset;
+        updateFragment(schema, parentNode, stateItem, range);
+        continue;
+      }
+
+      schema = is.fn(schema) ? schema(stateItem) : schema;
+
       // Apply high level replacements
       const isApplied = applyTopNodeUpdates(childNode, schema, stateItem);
       if (isApplied) continue;
@@ -370,32 +413,94 @@ const updateFragment = (inputSchema, parentNode, stateArray, fragRange) => {
   }
 };
 
-// Calculate node range using comment markers
-const getFragmentRange = (parentElement, index) => {
-  const nodes = parentElement.childNodes;
-  const nodesLength = nodes.length;
-  let range;
-  for (let i = 0; i < nodesLength; ++i) {
-    const child = nodes[i];
-    if (!isNode.comment(child) || child.data === FRAG_PLACEHOLDER) continue;
-    const [marker, fragIndex] = child.data.split(':');
-    if (+fragIndex !== index) continue;
-    if (marker === FRAG_RANGE_START) {
-      range = new Range();
-      range.setStartAfter(child);
-    } else if (range && marker === FRAG_RANGE_END) {
-      range.setEndBefore(child);
-      break;
+const getRange = (startComment) => {
+  if (!isNode.comment(startComment)) return null;
+  const { marker: start, id: startId } = parseCommentData(startComment.data);
+  if (start !== FRAG_RANGE_START) return null;
+  const range = new Range();
+  range.setStartAfter(startComment);
+  let node = startComment;
+  while ((node = node.nextSibling)) {
+    if (!isNode.comment(node)) continue;
+    const { marker, id: endId } = parseCommentData(node.data);
+    if (marker === FRAG_RANGE_END && startId === endId) {
+      range.setEndBefore(node);
+      return range;
     }
   }
-  return range;
 };
+
+// Calculate node range using comment markers
+// const getFragmentRangeOLD = (parentElement, index) => {
+//   const nodes = parentElement.childNodes;
+//   const nodesLength = nodes.length;
+//   let range;
+//   for (let i = 0; i < nodesLength; ++i) {
+//     const child = nodes[i];
+//     if (!isNode.comment(child) || child.data === FRAG_PLACEHOLDER) continue;
+//     const [marker, fragIndex] = child.data.split(':');
+//     if (+fragIndex !== index) continue;
+//     if (marker === FRAG_RANGE_START) {
+//       range = new Range();
+//       range.setStartAfter(child);
+//     } else if (range && marker === FRAG_RANGE_END) {
+//       range.setEndBefore(child);
+//       break;
+//     }
+//   }
+//   return range;
+// };
+
+// Helper to check if a node is a comment and not a placeholder
+const isRangeComment = (node) =>
+  isNode.comment(node) && node.data !== FRAG_PLACEHOLDER;
+
+// Parse comment to get marker, index, and length
+const parseCommentData = (comment) => {
+  const [marker, index, length, id] = comment.split(':');
+  return {
+    marker,
+    index: parseInt(index),
+    length: parseInt(length),
+    id: parseInt(id),
+  };
+};
+
+// Calculate node range using comment markers accounting for nesting
+const getFragmentRange = (parentElement, fragmentIndex) => {
+  const nodes = parentElement.childNodes;
+  const nodesLength = nodes.length;
+  let activeRange = null;
+  let depth = 0;
+
+  for (let i = 0; i < nodesLength; ++i) {
+    const node = nodes[i];
+    if (!isRangeComment(node)) continue;
+
+    const { marker, index } = parseCommentData(node.data);
+    if (index !== fragmentIndex) continue;
+
+    if (marker === FRAG_RANGE_START) {
+      if (depth === 0) {
+        activeRange = new Range();
+        activeRange.setStartAfter(node);
+      }
+      depth++;
+    } else if (marker === FRAG_RANGE_END && depth > 0) {
+      depth--;
+      if (depth === 0 && activeRange) {
+        activeRange.setEndBefore(node);
+        return activeRange;
+      }
+    }
+  }
+  return null;
+};
+
+let FRAG_COUNTER = 0;
 
 const renderFragment = (schema, index, stateArray) => {
   const fragment = new DocumentFragment();
-  // Mark fragment
-  const start = new Comment(`${FRAG_RANGE_START}:${index}`);
-  const end = new Comment(`${FRAG_RANGE_END}:${index}`);
   // First read
   const nodes = stateArray
     .map((state, index, array) => {
@@ -403,6 +508,16 @@ const renderFragment = (schema, index, stateArray) => {
       return render(schema, stateItem);
     })
     .filter((node) => !isEmptyValue(node));
+  // Provide data about nodes length for fragment
+  const nodesLen = nodes.reduce((totalLen, node) => {
+    const len = is.basic(node) ? 1 : node.childNodes.length;
+    return totalLen + len;
+  }, 0);
+  // Mark fragment
+  // todo refactor markers
+  const fragId = ++FRAG_COUNTER;
+  const start = new Comment(`${FRAG_RANGE_START}:${index}:${nodesLen}:${fragId}`);
+  const end = new Comment(`${FRAG_RANGE_END}:${index}:${nodesLen}:${fragId}`);
   // Then write
   fragment.append(start, ...nodes, end);
   return fragment;
@@ -446,11 +561,20 @@ const makeUpdateActions = (parentElement, defaultStateItem) => ({
   },
 });
 
+// Find element in fragment by index path
+const findBoundNode = (rootElement, indexPath) => {
+  let element = rootElement;
+  for (const index of indexPath) {
+    element = element.childNodes[index];
+  }
+  return element;
+};
+
 // STAGE 2: render component with bindings
 const renderComponent = (rootNode, schema, bindings, stateItem) => {
   const fragmentInsertions = [];
   for (const [indexPath, binding] of bindings) {
-    const [parentNode] = makeBoundNode(rootNode, schema, stateItem, indexPath);
+    const parentNode = findBoundNode(rootNode, indexPath);
     const actions = makeUpdateActions(parentNode, stateItem);
     // Render bound props
     for (const [propPath, binder] of binding) {
@@ -481,7 +605,7 @@ const getTemplate = (schemaInput) => {
 const assignNodeSchema = (node, schema) => {
   if (hasOwn(node, NODE_SCHEMA)) return;
   node[NODE_SCHEMA] = schema;
-  if (node.constructor.name === 'DocumentFragment') {
+  if (isNode.fragment(node)) {
     const children = node.childNodes;
     const len = children.length;
     for (let i = 0; i < len; ++i) children[i][NODE_SCHEMA] = schema;
