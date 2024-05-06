@@ -20,7 +20,7 @@ const isNode = {
   text: (node) => node.nodeType === Node.TEXT_NODE,
   element: (node) => node.nodeType === Node.ELEMENT_NODE,
   comment: (node) => node.nodeType === Node.COMMENT_NODE,
-  fragment: (node) => node.constructor.name === 'DocumentFragment',
+  fragment: (node) => node.nodeType === Node.DOCUMENT_FRAGMENT_NODE,
 };
 
 // Check if node corresponds to schema tag or text
