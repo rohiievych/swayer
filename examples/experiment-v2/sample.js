@@ -2,7 +2,8 @@ import { render } from '../../lib-v2/renderer.js';
 
 let addd = 0;
 setTimeout(() => addd += 1000, 3000);
-const createArray = (num = 1000) => new Array(num).fill(null);
+setTimeout(() => addd += 1000, 6000);
+const createArray = (num = 2) => new Array(num).fill(null);
 const createItem = (add = addd) => (_, i) => ({
   id: 1 + i + add,
   label: `Item ${1 + i + add}`,
@@ -19,26 +20,48 @@ class ModelSampleChild {
   };
 }
 
+const spans = [
+  'I am span 1.1 ',
+  { tag: 'b', text: (state) => state.label },
+  ' I am span 1.2 ',
+  { tag: 'b', text: (state) => state.label },
+  { tag: 'br' },
+];
+
 const div = {
   tag: 'div',
   // model: ModelSampleChild,
   // model: (state) => ({ state }),
   children: [
-    (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
-    (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
-    (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
-    (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
-    (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
-    (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
-    (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
-    (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
-    (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
-    (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
-    (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
-    (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
-    (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
-    (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
-    (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
+    // FAST
+    // 'I am span 1.1 ',
+    // { tag: 'b', text: (state) => state.label },
+    // ' I am span 1.2 ',
+    // { tag: 'b', text: (state) => state.label },
+    // { tag: 'br' },
+
+    // SLOW
+    // (state) => spans,
+    (state) => [
+      'I am span 1.1 ',
+      { tag: 'b', text: state.label },
+      ' I am span 1.2 ',
+      { tag: 'b', text: state.label },
+      { tag: 'br' },
+    ],
+    // (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
+    // (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
+    // (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
+    // (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
+    // (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
+    // (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
+    // (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
+    // (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
+    // (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
+    // (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
+    // (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
+    // (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
+    // (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
     { tag: 'p', text: (state) => `I am p element ${state.id}` },
     'I am span 1',
     'I am span 1.2',

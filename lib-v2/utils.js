@@ -2,6 +2,8 @@ const BASIC_PRIMITIVES = ['string', 'boolean', 'number', 'bigint', 'symbol'];
 
 const is = {
   obj: (value) => typeof value === 'object' && value !== null,
+  emptyObj: (value) => is.obj(value) && Object.keys(value).length === 0,
+  date: (value) => value instanceof Date,
   arr: (value) => Array.isArray(value),
   fn: (value) => typeof value === 'function',
   str: (value) => typeof value === 'string',
@@ -64,6 +66,41 @@ const mergeDeep = (target, source) => {
   return target;
 };
 
+// deep-object-diff fork
+const diff = (lhs, rhs, options = { keepFunctionsChanged: false }) => {
+  // Original comparison
+  // if (lhs === rhs) return {};
+  // Account primitives only to dive into objects
+  if (is.basic(lhs) && is.basic(rhs) && lhs === rhs) return {};
+
+  if (!is.obj(lhs) || !is.obj(rhs)) return rhs;
+
+  if (is.date(lhs) || is.date(rhs)) {
+    return lhs.valueOf() === rhs.valueOf() ? {} : rhs;
+  }
+  const result = {};
+  // Handle deletions or undefined properties
+  for (const key of Object.keys(lhs)) {
+    if (!hasOwn(rhs, key)) result[key] = undefined;
+  }
+  // Handle additions, changes, and deep differences
+  for (const key of Object.keys(rhs)) {
+    if (!hasOwn(lhs, key)) {
+      result[key] = rhs[key];
+      continue;
+    }
+    if (is.fn(lhs[key]) || is.fn(rhs[key])) {
+      // Determine function change based on the parameter
+      if (options.keepFunctionsChanged) result[key] = rhs[key];
+      else if (lhs[key] !== rhs[key]) result[key] = rhs[key];
+    } else {
+      const valueDiff = diff(lhs[key], rhs[key], options);
+      if (!is.emptyObj(valueDiff)) result[key] = valueDiff;
+    }
+  }
+  return result;
+};
+
 const camelToKebabCase = (() => {
   const camelCasePattern = /[A-Z]/g;
   const replacer = (letter) => `-${letter.toLowerCase()}`;
@@ -85,6 +122,7 @@ export {
   isEnumerable,
   equal,
   mergeDeep,
+  diff,
   camelToKebabCase,
   normalizePath,
   isBrowser,

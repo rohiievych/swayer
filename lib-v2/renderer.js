@@ -1,4 +1,3 @@
-import diff from '../node_modules/deep-object-diff/mjs/diff.js';
 import {
   DATA_ATTR_NAME,
   FRAG_PLACEHOLDER,
@@ -9,12 +8,14 @@ import {
   SCHEMA_ATTRS,
   SCHEMA_CHILDREN,
   SCHEMA_CLASSES,
-  SCHEMA_COMPONENT, SCHEMA_MODEL, SCHEMA_MODEL_STATE,
+  SCHEMA_COMPONENT,
+  SCHEMA_MODEL,
+  SCHEMA_MODEL_STATE,
   SCHEMA_OF_DATA,
   SCHEMA_TAG,
   SCHEMA_TEXT,
 } from './constants.js';
-import { camelToKebabCase, hasOwn, is } from './utils.js';
+import { camelToKebabCase, diff, hasOwn, is } from './utils.js';
 
 const isNode = {
   text: (node) => node.nodeType === Node.TEXT_NODE,
@@ -86,19 +87,19 @@ const appendFragmentPlaceholder = (parentElement) => {
 const cleanseSchema = (schema) => {
   if (!is.obj(schema)) return schema;
   if (is.arr(schema)) {
-    return schema.reduce((acc, item) => {
-      if (!isEmptyValue(item)) acc.push(cleanseSchema(item));
-      return acc;
-    }, []);
+    const len = schema.length;
+    for (let i = 0; i < len; ++i) {
+      const item = schema[i];
+      if (isEmptyValue(item)) schema.splice(i, 1);
+      else schema[i] = cleanseSchema(item);
+    }
+    return schema;
   }
-  const result = {};
   for (const [key, value] of Object.entries(schema)) {
     if (isEmptyValue(value)) continue;
-    // Create new bindings to differ similar nodes
-    if (is.fn(value)) result[key] = value.bind(schema);
-    else result[key] = cleanseSchema(value);
+    schema[key] = cleanseSchema(value);
   }
-  return result;
+  return schema;
 };
 
 // STAGE 1: render DOM node template
@@ -234,18 +235,22 @@ const splitUpdatePath = (updatePath) => {
   const indexPaths = [];
   const pathLen = updatePath.length;
   for (let i = 0; i < pathLen; ++i) {
-    const item = +updatePath[i];
-    if (isNaN(item)) return [indexPaths, updatePath.slice(i)];
+    const part = updatePath[i];
+    const item = parseInt(part, 10);
+    if (isNaN(item)) {
+      const propPaths = updatePath.slice(i);
+      // Normalize child update
+      if (is.fn(part)) propPaths.unshift(SCHEMA_CHILDREN, indexPaths.pop());
+      return [indexPaths, propPaths];
+    }
     indexPaths.push(item);
   }
   return [indexPaths, []];
 };
 
-// todo resolve a problem why schema child function is not diffed
-
 // Get schema diffs
 const getUpdatePaths = (prevSchema, curSchema) => {
-  const diffs = diff(prevSchema, curSchema);
+  const diffs = diff(prevSchema, curSchema, { keepFunctionsChanged: true });
   const updatePaths = exploreUpdates(diffs);
   return updatePaths.map(splitUpdatePath);
 };
@@ -282,12 +287,12 @@ const makeBoundNode = (rootNode, schema, stateItem, indexPath) => {
       curSchema = curSchema[SCHEMA_CHILDREN][index];
     }
 
-    // todo optimize
-    const range = getFragmentRange(node, index);
-    if (range) {
-      updateFragment(curSchema, node, stateItem, range);
-      return [node, removals];
-    }
+    // Seems to be redundant
+    // const range = getFragmentRange(node, index);
+    // if (range) {
+    //   updateFragment(curSchema, node, stateItem, range);
+    //   return [node, removals];
+    // }
 
     const child = getChildNodeByFragIndex(node.childNodes, index);
     if (checkNode(child, curSchema)) {
@@ -316,7 +321,7 @@ const applyTopNodeUpdates = (node, schema, stateItem) => {
     node.replaceWith(newNode);
     return true;
   }
-  return false;
+  return is.basic(schema);
 };
 
 const applyNodeUpdates = (node, schema, updatePaths, stateItem) => {
@@ -430,27 +435,6 @@ const getRange = (startComment) => {
   }
 };
 
-// Calculate node range using comment markers
-// const getFragmentRangeOLD = (parentElement, index) => {
-//   const nodes = parentElement.childNodes;
-//   const nodesLength = nodes.length;
-//   let range;
-//   for (let i = 0; i < nodesLength; ++i) {
-//     const child = nodes[i];
-//     if (!isNode.comment(child) || child.data === FRAG_PLACEHOLDER) continue;
-//     const [marker, fragIndex] = child.data.split(':');
-//     if (+fragIndex !== index) continue;
-//     if (marker === FRAG_RANGE_START) {
-//       range = new Range();
-//       range.setStartAfter(child);
-//     } else if (range && marker === FRAG_RANGE_END) {
-//       range.setEndBefore(child);
-//       break;
-//     }
-//   }
-//   return range;
-// };
-
 // Helper to check if a node is a comment and not a placeholder
 const isRangeComment = (node) =>
   isNode.comment(node) && node.data !== FRAG_PLACEHOLDER;
@@ -460,11 +444,16 @@ const parseCommentData = (comment) => {
   const [marker, index, length, id] = comment.split(':');
   return {
     marker,
-    index: parseInt(index),
-    length: parseInt(length),
-    id: parseInt(id),
+    index: parseInt(index, 10),
+    length: parseInt(length, 10),
+    id: parseInt(id, 10),
   };
 };
+
+// todo try: instead of storing length in comment
+// try to weak map start comment to end comment
+// and find length (range?) between them
+// length is not updated during dom ops
 
 // Calculate node range using comment markers accounting for nesting
 const getFragmentRange = (parentElement, fragmentIndex) => {
@@ -477,7 +466,7 @@ const getFragmentRange = (parentElement, fragmentIndex) => {
     const node = nodes[i];
     if (!isRangeComment(node)) continue;
 
-    const { marker, index } = parseCommentData(node.data);
+    const { marker, index, length } = parseCommentData(node.data);
     if (index !== fragmentIndex) continue;
 
     if (marker === FRAG_RANGE_START) {
@@ -485,6 +474,8 @@ const getFragmentRange = (parentElement, fragmentIndex) => {
         activeRange = new Range();
         activeRange.setStartAfter(node);
       }
+      // Jump directly to end comment
+      i += length;
       depth++;
     } else if (marker === FRAG_RANGE_END && depth > 0) {
       depth--;
@@ -556,7 +547,7 @@ const makeUpdateActions = (parentElement, defaultStateItem) => ({
       ({ [SCHEMA_COMPONENT]: schema } = value);
       stateArray = [value[SCHEMA_ARGS_DATA]];
     }
-    const index = nestedProp || 0;
+    const index = parseInt(nestedProp, 10) || 0;
     return renderChildren(schema, parentElement, index, stateArray);
   },
 });
