@@ -12,16 +12,24 @@ const is = {
   nullish: (value) => value === undefined || value === null,
 };
 
+const isFalsyValue = (value) => is.nullish(value)
+  || value === ''
+  || value === false;
+
 const hasOwn = (object, prop) => Object.hasOwn?.(object, prop)
   ?? Object.prototype.hasOwnProperty.call(object, prop);
 
 const isEnumerable = (object, prop) =>
   Object.prototype.propertyIsEnumerable.call(object, prop);
 
-const equal = (a, b) => {
+const equal = (a, b, objectGetter) => {
   if (a === b) return true;
   if (is.fn(a) && is.fn(b)) return a.toString() === b.toString();
   if (is.obj(a) && is.obj(b)) {
+    if (is.fn(objectGetter)) {
+      a = objectGetter(a);
+      b = objectGetter(b);
+    }
     if (a.constructor !== b.constructor) return false;
     let length, index;
     if (is.arr(a)) {
@@ -29,7 +37,7 @@ const equal = (a, b) => {
       if (length !== b.length) return false;
       index = length;
       while (index--) {
-        if (!equal(a[index], b[index])) return false;
+        if (!equal(a[index], b[index], objectGetter)) return false;
       }
       return true;
     }
@@ -43,7 +51,7 @@ const equal = (a, b) => {
     index = length;
     while (index--) {
       const key = keys[index];
-      if (!equal(a[key], b[key])) return false;
+      if (!equal(a[key], b[key], objectGetter)) return false;
     }
     return true;
   }
@@ -118,6 +126,7 @@ const isServer = hasOwn(globalThis, 'process');
 
 export {
   is,
+  isFalsyValue,
   hasOwn,
   isEnumerable,
   equal,

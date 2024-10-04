@@ -1,5 +1,4 @@
 import {
-  DATA_ATTR_NAME,
   FRAG_PLACEHOLDER,
   FRAG_RANGE_END,
   FRAG_RANGE_START,
@@ -15,17 +14,20 @@ import {
   SCHEMA_TAG,
   SCHEMA_TEXT,
 } from './constants.js';
-import { camelToKebabCase, diff, hasOwn, is } from './utils.js';
+import {
+  isNode,
+  setElementAttr,
+  setElementAttrs,
+  setNodeText,
+} from './node-ops.js';
+import Reactivity from './reactivity.js';
+import { diff, hasOwn, is, isFalsyValue } from './utils.js';
 
-const isNode = {
-  text: (node) => node.nodeType === Node.TEXT_NODE,
-  element: (node) => node.nodeType === Node.ELEMENT_NODE,
-  comment: (node) => node.nodeType === Node.COMMENT_NODE,
-  fragment: (node) => node.nodeType === Node.DOCUMENT_FRAGMENT_NODE,
-};
+// DOM implementation
+const dom = window.document;
 
 // Check if node corresponds to schema tag or text
-const checkNode = (node, schema) => {
+const checkNodeSchema = (node, schema) => {
   if (!node || is.nullish(schema)) return false;
   const isTxtNode = isNode.text(node);
   if (isTxtNode && is.basic(schema)) {
@@ -34,52 +36,9 @@ const checkNode = (node, schema) => {
   return node.nodeName.toLowerCase() === schema[SCHEMA_TAG];
 };
 
-const isEmptyValue = (value) => is.nullish(value)
-  || value === ''
-  || value === false;
-
-const setElementText = (node, text) => {
-  if (is.nullish(text)) text = '';
-  else if (!is.str(text)) text = text.toString();
-  const existing = node.textContent;
-  if (existing !== text) node.textContent = text;
-};
-
-const setElementInlineStyle = (element, props) => {
-  if (!is.obj(props)) return;
-  for (const [prop, value] of Object.entries(props)) {
-    element.style[prop] = value;
-  }
-};
-
-const setElementAttr = (element, name, value) => {
-  if (is.fn(value)) return;
-  const attr = camelToKebabCase(name);
-  if (attr === 'style') setElementInlineStyle(element, value);
-  else if (value === true) element.setAttribute(attr, '');
-  else if (isEmptyValue(value)) element.removeAttribute(attr);
-  else element.setAttribute(attr, value);
-};
-
-const setElementAttrs = (element, attrs) => {
-  const attrNames = element.getAttributeNames();
-  if (isEmptyValue(attrs)) {
-    for (const name of attrNames) element.removeAttribute(name);
-    return;
-  }
-  for (const name of attrNames) {
-    const hasAttr = hasOwn(attrs, name);
-    const isMandatoryAttr = name.startsWith(DATA_ATTR_NAME) || name === 'class';
-    const redundant = !hasAttr && !isMandatoryAttr;
-    if (redundant) element.removeAttribute(name);
-  }
-  const attrPairs = Object.entries(attrs);
-  for (const pair of attrPairs) setElementAttr(element, ...pair);
-};
-
 // Preserves initial fragment index
 const appendFragmentPlaceholder = (parentElement) => {
-  const fragmentPlaceholder = new Comment(FRAG_PLACEHOLDER);
+  const fragmentPlaceholder = dom.createComment(FRAG_PLACEHOLDER);
   parentElement.append(fragmentPlaceholder);
 };
 
@@ -90,65 +49,60 @@ const cleanseSchema = (schema) => {
     const len = schema.length;
     for (let i = 0; i < len; ++i) {
       const item = schema[i];
-      if (isEmptyValue(item)) schema.splice(i, 1);
+      if (isFalsyValue(item)) schema.splice(i, 1);
       else schema[i] = cleanseSchema(item);
     }
     return schema;
   }
   for (const [key, value] of Object.entries(schema)) {
-    if (isEmptyValue(value)) continue;
+    if (isFalsyValue(value)) continue;
     schema[key] = cleanseSchema(value);
   }
   return schema;
 };
 
 // STAGE 1: render DOM node template
-const createNodeTemplate = (schemaInput) => {
+const createNodeTemplate = (schemaInput, modelItem) => {
   const templateSchema = cleanseSchema(schemaInput);
   let templateNode;
-
   /** @type {any} */
   let stack = [{
     schema: templateSchema,
     parentElement: null,
     indexPath: [],
   }];
-
   if (is.arr(templateSchema)) {
-    templateNode = new DocumentFragment();
+    templateNode = dom.createDocumentFragment();
     stack = templateSchema.map((schemaItem, i) => ({
       schema: schemaItem,
       parentElement: templateNode,
       indexPath: [i],
     })).reverse();
   }
-
   const bindings = new Map();
-
+  let model = modelItem ? modelItem.model : null;
   while (stack.length > 0) {
     const { schema, parentElement, indexPath } = stack.pop();
-
+    if (hasOwn(schema, SCHEMA_MODEL)) model = schema[SCHEMA_MODEL];
     // Collect bindings
     const binding = new Map();
-
     // Dynamic fragment schema
     if (is.fn(schema)) {
       const indices = indexPath.slice(0, -1);
       const startIndex = indexPath[indexPath.length - 1];
-      binding.set([SCHEMA_CHILDREN, startIndex], schema);
+      binding.set([SCHEMA_CHILDREN, startIndex], [schema, model]);
       bindings.set(indices, binding);
       appendFragmentPlaceholder(parentElement);
       continue;
     }
     // Primitive schemas (strings, numbers, symbols)
     if (is.basic(schema)) {
-      const text = document.createTextNode(schema);
-      binding.set([SCHEMA_TEXT], schema);
-      setElementText(text, schema);
+      const text = dom.createTextNode(schema);
+      binding.set([SCHEMA_TEXT], [schema, model]);
+      setNodeText(text, schema);
       parentElement.append(text);
       continue;
     }
-
     const {
       [SCHEMA_TAG]: tag,
       [SCHEMA_TEXT]: text,
@@ -156,28 +110,26 @@ const createNodeTemplate = (schemaInput) => {
       [SCHEMA_CLASSES]: classes,
       [SCHEMA_CHILDREN]: children,
     } = schema;
-
-    const element = document.createElement(tag);
-
-    if (is.fn(text)) binding.set([SCHEMA_TEXT], text);
-    else setElementText(element, text);
-
+    const element = dom.createElement(tag);
+    // Set template text
+    if (is.fn(text)) binding.set([SCHEMA_TEXT], [text, model]);
+    else setNodeText(element, text);
+    // Set template attrs
     if (is.fn(attrs)) {
-      binding.set([SCHEMA_ATTRS], attrs);
+      binding.set([SCHEMA_ATTRS], [attrs, model]);
     } else if (is.obj(attrs)) {
       for (const [attr, value] of Object.entries(attrs)) {
-        if (is.fn(value)) binding.set([SCHEMA_ATTRS, attr], value);
+        if (is.fn(value)) binding.set([SCHEMA_ATTRS, attr], [value, model]);
         else setElementAttr(element, attr, value);
       }
     }
-
-    if (is.fn(classes)) binding.set([SCHEMA_CLASSES], classes);
+    // Set template classes
+    if (is.fn(classes)) binding.set([SCHEMA_CLASSES], [classes, model]);
     else if (is.str(classes)) setElementAttr(element, 'class', classes);
-
+    // Prepare template children placeholders
     if (is.fn(children)) {
-      binding.set([SCHEMA_CHILDREN], children);
+      binding.set([SCHEMA_CHILDREN], [children, model]);
       appendFragmentPlaceholder(element);
-
     } else if (is.arr(children)) {
       for (let i = children.length - 1; i >= 0; --i) {
         stack.push({
@@ -187,12 +139,10 @@ const createNodeTemplate = (schemaInput) => {
         });
       }
     }
-
     if (binding.size > 0) bindings.set(indexPath, binding);
     if (parentElement) parentElement.append(element);
     else templateNode = element;
   }
-
   return { templateSchema, templateNode, bindings };
 };
 
@@ -225,7 +175,7 @@ const exploreUpdates = (obj, path = [], results = []) =>
     const newPath = resolveUpdatePath(key, val, path);
     if (shouldOptimizeUpdates(newPath, results)) return results;
     if (is.obj(val)) return exploreUpdates(val, newPath, results);
-    else if (isEmptyValue(val)) results.push(newPath);
+    else if (isFalsyValue(val)) results.push(newPath);
     else results.push([...newPath, val]);
     return results;
   }, results);
@@ -255,27 +205,23 @@ const getUpdatePaths = (prevSchema, curSchema) => {
   return updatePaths.map(splitUpdatePath);
 };
 
+const FRAG_BOUNDARIES = new WeakMap();
+
 const getChildNodeByFragIndex = (nodes, fragmentIndex) => {
-  const nodesLen = nodes.length;
-  let currentIndex = -1;
-  for (let i = 0; i < nodesLen; i++) {
-    ++currentIndex;
-    const node = nodes[i];
-    if (isNode.comment(node) && node.data !== FRAG_PLACEHOLDER) {
-      // Skip nodes fragment like it's single node
-      if (node.data.startsWith(FRAG_RANGE_START)) {
-        const { length: fragNodesLength } = parseCommentData(node.data);
-        i += fragNodesLength + 1;
-      }
-      continue;
-    }
-    if (currentIndex === fragmentIndex) return node;
+  let currentIndex = 0;
+  let node = nodes[0];
+  while (node) {
+    // Skip nodes fragment like it's single node
+    const skip = isNode.comment(node) && node.data.startsWith(FRAG_RANGE_START);
+    if (skip) node = FRAG_BOUNDARIES.get(node);
+    node = node.nextSibling;
+    if (++currentIndex === fragmentIndex) return node;
   }
   return null;
 };
 
 // Make element in fragment by index path
-const makeBoundNode = (rootNode, schema, stateItem, indexPath) => {
+const makeBoundNode = (rootNode, schema, modelItem, indexPath) => {
   // Collect removals to prevent incorrect childNode indexing
   const removals = [];
   let node = rootNode;
@@ -286,24 +232,16 @@ const makeBoundNode = (rootNode, schema, stateItem, indexPath) => {
     } else if (is.obj(curSchema) && hasOwn(curSchema, SCHEMA_CHILDREN)) {
       curSchema = curSchema[SCHEMA_CHILDREN][index];
     }
-
-    // Seems to be redundant
-    // const range = getFragmentRange(node, index);
-    // if (range) {
-    //   updateFragment(curSchema, node, stateItem, range);
-    //   return [node, removals];
-    // }
-
     const child = getChildNodeByFragIndex(node.childNodes, index);
-    if (checkNode(child, curSchema)) {
+    if (checkNodeSchema(child, curSchema)) {
       node = child;
     } else if (child) {
-      const renderResult = render(curSchema, stateItem);
-      if (isEmptyValue(renderResult)) removals.push(() => child.remove());
+      const renderResult = render(curSchema, modelItem);
+      if (isFalsyValue(renderResult)) removals.push(() => child.remove());
       else child.replaceWith(renderResult);
       return [renderResult, removals];
     } else if (isNode.element(node)) {
-      const renderResult = render(curSchema, stateItem);
+      const renderResult = render(curSchema, modelItem);
       node.append(renderResult);
       return [renderResult, removals];
     }
@@ -311,48 +249,48 @@ const makeBoundNode = (rootNode, schema, stateItem, indexPath) => {
   return [node, removals];
 };
 
-const applyTopNodeUpdates = (node, schema, stateItem) => {
-  if (isEmptyValue(schema)) {
+const applyTopNodeUpdates = (node, schema, modelItem) => {
+  if (isFalsyValue(schema)) {
     node.remove();
     return true;
   }
-  if (!checkNode(node, schema)) {
-    const newNode = render(schema, stateItem);
+  if (!checkNodeSchema(node, schema)) {
+    const newNode = render(schema, modelItem);
     node.replaceWith(newNode);
     return true;
   }
   return is.basic(schema);
 };
 
-const applyNodeUpdates = (node, schema, updatePaths, stateItem) => {
+const applyNodeUpdates = (node, schema, updatePaths, modelItem) => {
   const removeActions = [];
   for (const path of updatePaths) {
     const [indexPath, propPath] = path;
     const [prop, nestedProp, value] = propPath;
     const [boundNode, removals] = makeBoundNode(
-      node, schema, stateItem, indexPath,
+      node, schema, modelItem, indexPath,
     );
     if (removals.length > 0) removeActions.push(...removals);
     if (!boundNode) continue;
-    const actions = makeUpdateActions(boundNode, stateItem);
+    const actions = makeUpdateActions(boundNode);
     if (!hasOwn(actions, prop)) continue;
     const action = actions[prop];
     const noVal = value === undefined;
     const val = noVal ? nestedProp : value;
     const nested = noVal ? undefined : nestedProp;
-    const { state, index, array } = stateItem;
-    const updatedVal = is.fn(val) ? val(state, index, array) : val;
-    const updateChildren = action(updatedVal, nested);
+    const { model, index, array } = modelItem;
+    const updatedVal = is.fn(val) ? val(model.state, index, array) : val;
+    const updateChildren = action(updatedVal, nested, modelItem);
     // Replaces existing node with fragment
     if (updateChildren) updateChildren();
   }
   for (const action of removeActions) action();
 };
 
-const updateFragment = (inputSchema, parentNode, stateArray, fragRange) => {
+const updateFragment = (inputSchema, parentNode, modelArray, fragRange) => {
   const children = parentNode.childNodes;
-  stateArray = is.arr(stateArray) ? stateArray : [stateArray];
-  const dataLength = stateArray.length;
+  modelArray = is.arr(modelArray) ? modelArray : [modelArray];
+  const dataLength = modelArray.length;
   const schemas = is.arr(inputSchema) ? inputSchema : [inputSchema];
   const schemasLength = schemas.length;
   let { startOffset, endOffset } = fragRange;
@@ -361,7 +299,7 @@ const updateFragment = (inputSchema, parentNode, stateArray, fragRange) => {
   let end = start;
   // Update nodes
   for (let i = 0; i < dataLength; ++i) {
-    const stateItem = createStateItem(stateArray[i], i, stateArray);
+    let modelItem = modelArray[i];
     let schemaIndex = 0;
     start = i * schemasLength + startOffset;
     end = start + schemasLength;
@@ -373,38 +311,35 @@ const updateFragment = (inputSchema, parentNode, stateArray, fragRange) => {
       if (start + schemaIndex >= endOffset || !childNode) {
         // Append only remaining part of schemas
         const part = schemaIndex > 0 ? schemas.slice(schemaIndex) : schemas;
-        const newNode = render(part, stateItem);
+        const newNode = render(part, modelItem);
         if (newNode) fragEndNode.before(newNode);
         break;
       }
       let schema = schemas[schemaIndex];
-
-      // todo provide testing for nested ranges
-
       // Update nested fragments
-      const range = getRange(childNode);
-      if (range) {
+      const frag = getNodeFragment(childNode);
+      if (frag) {
+        const range = frag.range;
         const offset = range.endOffset - range.startOffset + 1;
         start += offset;
         startOffset += offset;
         end += offset;
         j += offset;
-        updateFragment(schema, parentNode, stateItem, range);
+        updateFragment(schema, parentNode, modelItem, range);
         continue;
       }
-
-      schema = is.fn(schema) ? schema(stateItem) : schema;
-
+      schema = is.fn(schema) ? schema(modelItem.model.state) : schema;
       // Apply high level replacements
-      const isApplied = applyTopNodeUpdates(childNode, schema, stateItem);
+      const isApplied = applyTopNodeUpdates(childNode, schema, modelItem);
       if (isApplied) continue;
       const prevSchemas = childNode[NODE_SCHEMA];
       const prevSchema = is.arr(prevSchemas)
         ? prevSchemas[schemaIndex]
         : prevSchemas;
       const updatePaths = getUpdatePaths(prevSchema, schema);
+      modelItem = constructModelItem(schema, modelItem);
       // Apply updates
-      applyNodeUpdates(childNode, schema, updatePaths, stateItem);
+      applyNodeUpdates(childNode, schema, updatePaths, modelItem);
       // Update node schema
       childNode[NODE_SCHEMA] = inputSchema;
     }
@@ -418,97 +353,48 @@ const updateFragment = (inputSchema, parentNode, stateArray, fragRange) => {
   }
 };
 
-const getRange = (startComment) => {
-  if (!isNode.comment(startComment)) return null;
-  const { marker: start, id: startId } = parseCommentData(startComment.data);
-  if (start !== FRAG_RANGE_START) return null;
-  const range = new Range();
-  range.setStartAfter(startComment);
-  let node = startComment;
-  while ((node = node.nextSibling)) {
-    if (!isNode.comment(node)) continue;
-    const { marker, id: endId } = parseCommentData(node.data);
-    if (marker === FRAG_RANGE_END && startId === endId) {
-      range.setEndBefore(node);
-      return range;
-    }
-  }
-};
-
-// Helper to check if a node is a comment and not a placeholder
-const isRangeComment = (node) =>
-  isNode.comment(node) && node.data !== FRAG_PLACEHOLDER;
-
 // Parse comment to get marker, index, and length
 const parseCommentData = (comment) => {
-  const [marker, index, length, id] = comment.split(':');
+  const [marker, index] = comment.split(':');
   return {
     marker,
     index: parseInt(index, 10),
-    length: parseInt(length, 10),
-    id: parseInt(id, 10),
   };
 };
 
-// todo try: instead of storing length in comment
-// try to weak map start comment to end comment
-// and find length (range?) between them
-// length is not updated during dom ops
+const getNodeFragment = (startBoundary) => {
+  if (!isNode.comment(startBoundary)) return null;
+  const { marker, index } = parseCommentData(startBoundary.data);
+  if (marker !== FRAG_RANGE_START) return null;
+  const endBoundary = FRAG_BOUNDARIES.get(startBoundary);
+  const range = new Range();
+  range.setStartAfter(startBoundary);
+  range.setEndBefore(endBoundary);
+  return { range, index };
+};
 
-// Calculate node range using comment markers accounting for nesting
 const getFragmentRange = (parentElement, fragmentIndex) => {
   const nodes = parentElement.childNodes;
   const nodesLength = nodes.length;
-  let activeRange = null;
-  let depth = 0;
-
   for (let i = 0; i < nodesLength; ++i) {
     const node = nodes[i];
-    if (!isRangeComment(node)) continue;
-
-    const { marker, index, length } = parseCommentData(node.data);
-    if (index !== fragmentIndex) continue;
-
-    if (marker === FRAG_RANGE_START) {
-      if (depth === 0) {
-        activeRange = new Range();
-        activeRange.setStartAfter(node);
-      }
-      // Jump directly to end comment
-      i += length;
-      depth++;
-    } else if (marker === FRAG_RANGE_END && depth > 0) {
-      depth--;
-      if (depth === 0 && activeRange) {
-        activeRange.setEndBefore(node);
-        return activeRange;
-      }
-    }
+    const frag = getNodeFragment(node);
+    if (!frag) continue;
+    if (frag.index === fragmentIndex) return frag.range;
   }
   return null;
 };
 
-let FRAG_COUNTER = 0;
-
-const renderFragment = (schema, index, stateArray) => {
-  const fragment = new DocumentFragment();
+const renderFragment = (schema, index, modelArray) => {
+  const fragment = dom.createDocumentFragment();
   // First read
-  const nodes = stateArray
-    .map((state, index, array) => {
-      const stateItem = createStateItem(state, index, array);
-      return render(schema, stateItem);
-    })
-    .filter((node) => !isEmptyValue(node));
-  // Provide data about nodes length for fragment
-  const nodesLen = nodes.reduce((totalLen, node) => {
-    const len = is.basic(node) ? 1 : node.childNodes.length;
-    return totalLen + len;
-  }, 0);
+  const nodes = modelArray
+    .map((modelItem) => render(schema, modelItem))
+    .filter((node) => !isFalsyValue(node));
   // Mark fragment
-  // todo refactor markers
-  const fragId = ++FRAG_COUNTER;
-  const start = new Comment(`${FRAG_RANGE_START}:${index}:${nodesLen}:${fragId}`);
-  const end = new Comment(`${FRAG_RANGE_END}:${index}:${nodesLen}:${fragId}`);
+  const start = dom.createComment(`${FRAG_RANGE_START}:${index}`);
+  const end = dom.createComment(`${FRAG_RANGE_END}:${index}`);
+  FRAG_BOUNDARIES.set(start, end);
   // Then write
   fragment.append(start, ...nodes, end);
   return fragment;
@@ -521,34 +407,42 @@ const prepareFragmentInsertion = (parentElement, fragment, index) => {
   return () => fragmentPlaceholder.replaceWith(fragment);
 };
 
-const renderChildren = (schema, parentElement, fragmentIndex, stateArray) => {
+const renderChildren = (schema, parentElement, fragmentIndex, modelArray) => {
   const tplSchema = cleanseSchema(schema);
   const range = getFragmentRange(parentElement, fragmentIndex);
-  if (range) return updateFragment(tplSchema, parentElement, stateArray, range);
-  const fragment = renderFragment(tplSchema, fragmentIndex, stateArray);
+  if (range) return updateFragment(tplSchema, parentElement, modelArray, range);
+  const fragment = renderFragment(tplSchema, fragmentIndex, modelArray);
   return prepareFragmentInsertion(parentElement, fragment, fragmentIndex);
 };
 
 // Define schema to node update mapping
-const makeUpdateActions = (parentElement, defaultStateItem) => ({
-  [SCHEMA_TEXT]: (value) => setElementText(parentElement, value),
+const makeUpdateActions = (parentElement) => ({
+  [SCHEMA_TEXT]: (value) => setNodeText(parentElement, value),
   [SCHEMA_CLASSES]: (value) => setElementAttr(parentElement, 'class', value),
   [SCHEMA_ATTRS]: (value, nestedProp) => {
     if (nestedProp) setElementAttr(parentElement, nestedProp, value);
     else setElementAttrs(parentElement, value);
   },
-  [SCHEMA_CHILDREN]: (value, nestedProp) => {
-    if (isEmptyValue(value)) return;
+  [SCHEMA_CHILDREN]: (value, nestedProp, defaultModelItem) => {
+    if (isFalsyValue(value)) return;
     let schema = value;
-    let stateArray = [defaultStateItem.state];
+    let modelItems = [defaultModelItem];
     if (hasOwn(value, SCHEMA_OF_DATA)) {
-      ({ [SCHEMA_COMPONENT]: schema, [SCHEMA_OF_DATA]: stateArray } = value);
+      ({ [SCHEMA_COMPONENT]: schema, [SCHEMA_OF_DATA]: modelItems } = value);
     } else if (hasOwn(value, SCHEMA_ARGS_DATA)) {
       ({ [SCHEMA_COMPONENT]: schema } = value);
-      stateArray = [value[SCHEMA_ARGS_DATA]];
+      modelItems = [value[SCHEMA_ARGS_DATA]];
+    }
+    if (modelItems) {
+      modelItems = modelItems.map(
+        (state, index, array) => {
+          const item = createModelItem(state, index, array);
+          return constructModelItem(schema, item);
+        },
+      );
     }
     const index = parseInt(nestedProp, 10) || 0;
-    return renderChildren(schema, parentElement, index, stateArray);
+    return renderChildren(schema, parentElement, index, modelItems);
   },
 });
 
@@ -561,20 +455,35 @@ const findBoundNode = (rootElement, indexPath) => {
   return element;
 };
 
+const reactivity = new Reactivity();
+
 // STAGE 2: render component with bindings
-const renderComponent = (rootNode, schema, bindings, stateItem) => {
+const renderComponent = (rootNode, schema, bindings, modelItem) => {
   const fragmentInsertions = [];
+  const modelInstances = new WeakMap();
   for (const [indexPath, binding] of bindings) {
     const parentNode = findBoundNode(rootNode, indexPath);
-    const actions = makeUpdateActions(parentNode, stateItem);
+    const actions = makeUpdateActions(parentNode);
     // Render bound props
     for (const [propPath, binder] of binding) {
       const [prop, nestedProp] = propPath;
       if (!hasOwn(actions, prop)) continue;
       const action = actions[prop];
-      const { state, index, array } = stateItem;
-      const value = binder(state, index, array);
-      const insertion = action(value, nestedProp);
+      const [reaction, modelCtor] = binder;
+      let newModelItem = modelCtor ? modelInstances.get(modelCtor) : modelItem;
+      if (!newModelItem) {
+        const innerSchema = { [SCHEMA_MODEL]: modelCtor };
+        const item = modelItem ? createModelItem(modelItem.model.state) : null;
+        newModelItem = constructModelItem(innerSchema, item);
+        modelInstances.set(modelCtor, newModelItem);
+      }
+      // Add reactive update function
+      const update = () => {
+        const { model, index, array } = newModelItem;
+        const value = reaction(model.state, index, array);
+        return action(value, nestedProp, newModelItem);
+      };
+      const insertion = reactivity.register(reaction, update);
       if (insertion) fragmentInsertions.push(insertion);
     }
   }
@@ -585,14 +494,15 @@ const renderComponent = (rootNode, schema, bindings, stateItem) => {
 
 const templateCache = new WeakMap();
 
-const getTemplate = (schemaInput) => {
+const getTemplate = (schemaInput, modelItem) => {
   let template = templateCache.get(schemaInput);
   if (template) return template;
-  template = createNodeTemplate(schemaInput);
+  template = createNodeTemplate(schemaInput, modelItem);
   templateCache.set(schemaInput, template);
   return template;
 };
 
+// Attach schema to real node
 const assignNodeSchema = (node, schema) => {
   if (hasOwn(node, NODE_SCHEMA)) return;
   node[NODE_SCHEMA] = schema;
@@ -603,30 +513,33 @@ const assignNodeSchema = (node, schema) => {
   }
 };
 
-const createStateItem = (state, stateIndex, stateArray) => ({
-  state,
-  index: stateIndex,
-  array: stateArray,
+const createModelItem = (state, modelIndex, modelArray) => ({
+  model: { state },
+  index: modelIndex,
+  array: modelArray,
 });
 
-const constructModelState = (schema, stateItem) => {
-  const hasModel = hasOwn(schema, SCHEMA_MODEL);
-  if (!hasModel) return stateItem;
-  const args = [];
-  if (stateItem) args.push(stateItem.state, stateItem.index, stateItem.array);
-  const model = Reflect.construct(schema[SCHEMA_MODEL], args);
-  return {
-    state: model[SCHEMA_MODEL_STATE],
-    index: stateItem?.index,
-    array: stateItem?.array,
-  };
+const constructModelItem = (schema, modelItem) => {
+  const modelCtor = schema[SCHEMA_MODEL];
+  const isConstructable = is.fn(modelCtor);
+  if (!isConstructable) return modelItem;
+  const { model: parentModel, index, array } = modelItem || {};
+  const args = parentModel ? [parentModel.state, index, array] : [];
+  const model = Reflect.construct(modelCtor, args);
+  model.state = Reactivity.activate(model[SCHEMA_MODEL_STATE]);
+  return { model, index, array };
 };
 
-export const render = (schemaInput, stateItem, rootNode) => {
+const render = (schemaInput, modelItem, rootNode) => {
   if (!is.obj(schemaInput)) return schemaInput;
-  const { templateSchema, templateNode, bindings } = getTemplate(schemaInput);
+  const template = getTemplate(schemaInput, modelItem);
+  const { templateSchema, templateNode, bindings } = template;
   const node = rootNode || templateNode.cloneNode(true);
-  const modelStateItem = constructModelState(templateSchema, stateItem);
   assignNodeSchema(node, templateSchema);
-  return renderComponent(node, templateSchema, bindings, modelStateItem);
+  return renderComponent(node, templateSchema, bindings, modelItem);
+};
+
+export const renderRoot = (schemaInput, data, rootNode) => {
+  const modelItem = createModelItem(data);
+  return render(schemaInput, modelItem, rootNode);
 };

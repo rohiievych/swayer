@@ -1,9 +1,9 @@
-import { render } from '../../lib-v2/renderer.js';
+import { renderRoot } from '../../lib-v2/renderer.js';
 
 let addd = 0;
-setTimeout(() => addd += 1000, 3000);
-setTimeout(() => addd += 1000, 6000);
-const createArray = (num = 2) => new Array(num).fill(null);
+// setTimeout(() => addd += 1000, 3000);
+// setTimeout(() => addd += 1000, 6000);
+const createArray = (num = 1) => new Array(num).fill(null);
 const createItem = (add = addd) => (_, i) => ({
   id: 1 + i + add,
   label: `Item ${1 + i + add}`,
@@ -12,11 +12,14 @@ const createItem = (add = addd) => (_, i) => ({
 class ModelSampleChild {
 
   constructor(...args) {
-    console.log({ args });
+    // console.log('construct ModelSampleChild', args);
+    this.state.label = args[0].label;
   }
 
   state = {
+    id: 'SUPER CHILD',
     ok: true,
+    label: '',
   };
 }
 
@@ -30,7 +33,7 @@ const spans = [
 
 const div = {
   tag: 'div',
-  // model: ModelSampleChild,
+  model: ModelSampleChild,
   // model: (state) => ({ state }),
   children: [
     // FAST
@@ -46,7 +49,7 @@ const div = {
       'I am span 1.1 ',
       { tag: 'b', text: state.label },
       ' I am span 1.2 ',
-      { tag: 'b', text: state.label },
+      { tag: 'b', text: state.label || state.ok },
       { tag: 'br' },
     ],
     // (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
@@ -62,6 +65,8 @@ const div = {
     // (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
     // (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
     // (state) => [`I am span 1.1 ${state.label}`, `I am span 1.2 ${state.label}`],
+
+
     { tag: 'p', text: (state) => `I am p element ${state.id}` },
     'I am span 1',
     'I am span 1.2',
@@ -143,6 +148,15 @@ const actionBtn = {
 };
 
 class ModelSample {
+
+  constructor(state) {
+    // console.log('construct ModelSample', state);
+    // setTimeout(() => {
+    //   this.state.data = createArray().map(createItem());
+    // }, 3000);
+    if (state) this.state = state;
+  }
+
   state = {
     data: createArray().map(createItem()),
     row: 'row1',
@@ -318,6 +332,9 @@ const frag = [
 ];
 
 class FruitsClass {
+  constructor(state) {
+    if (state) this.state = state;
+  }
   state = {
     // data: createArray().map(createItem(100)),
     // row: 'row2',
@@ -383,24 +400,24 @@ const deleteBtn = document.getElementById('delete');
 
 const createFn = () => {
   const exampleElement = document.querySelector('#example-1');
-  const resultEl = render(example, undefined, exampleElement);
+  const resultEl = renderRoot(example, undefined, exampleElement);
   if (!exampleElement) root.append(resultEl);
 };
 
 const updateFn = () => {
   const exampleElement2 = document.querySelector('#example-2');
-  const resultEl = render(example2, undefined, exampleElement2);
+  const resultEl = renderRoot(example2, undefined, exampleElement2);
   if (!exampleElement2) root.append(resultEl);
 };
 
 const deleteFn = () => {
   const exampleElement = document.querySelector('#example-1');
   const state = { data: [] };
-  render(example, state, exampleElement);
+  renderRoot(example, state, exampleElement);
 
   const exampleElement2 = document.querySelector('#example-2');
   const state2 = { fruits: [] };
-  render(example2, state2, exampleElement2);
+  renderRoot(example2, state2, exampleElement2);
 };
 
 createBtn.addEventListener('click', createFn);
