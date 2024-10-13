@@ -9,6 +9,7 @@ class Dependency {
 
   static deps = new WeakMap();
   static #target = null;
+  static #updateBatch = new Map();
 
   constructor(ref) {
     this.#ref = ref;
@@ -16,7 +17,6 @@ class Dependency {
 
   static invoke(target) {
     this.#target = target;
-    // const result = target.init();
     const result = target.update();
     this.#target = null;
     return result;
@@ -66,8 +66,16 @@ class Dependency {
   }
 
   notify() {
-    const updates = this.#reactions.values();
-    for (const update of updates) update();
+    const batch = Dependency.#updateBatch;
+    for (const entry of this.#reactions) batch.set(...entry);
+    if (batch.size === 1) {
+      // Batch updates
+      queueMicrotask(() => {
+        const updates = batch.values();
+        for (const update of updates) update();
+        batch.clear();
+      });
+    }
   }
 
   cloneReactionsFrom(dep) {
@@ -93,33 +101,41 @@ class DependencyHandler {
   }
 
   static set(target, key, replaced, value) {
-    const isArrayLen = is.arr(target) && key === 'length';
-    if (!isArrayLen && DependencyHandler.#compare(value, replaced)) return;
     if (is.obj(replaced)) {
       const replacedTarget = replaced[TARGET];
+      // Transfer reactivity to new array
       if (is.arr(value)) {
         const newArray = value[TARGET];
-        const dep = Dependency.get(replacedTarget, 'length');
-        dep.notify();
-        Dependency.get(target, key).cloneReactionsFrom(dep);
-        Dependency.get(newArray, 'length').cloneReactionsFrom(dep);
+        const dep = DependencyHandler.notify(replacedTarget, 'length');
+        if (!dep) return;
+        // Clone length dep to new array to continue tracking
+        Dependency.obtain(newArray, 'length').cloneReactionsFrom(dep);
+        // Clean replaced array to free memory
         Dependency.deref(replacedTarget, true);
+        for (const item of replacedTarget) Dependency.deref(item[TARGET], true);
         return;
       }
       Dependency.deref(replacedTarget, true);
     }
-    Dependency.get(target, key)?.notify();
+    DependencyHandler.notify(target, key);
   }
 
   static deleteProperty(target, key, value) {
-    Dependency.get(target, key)?.notify();
+    DependencyHandler.notify(target, key);
     Dependency.delete(target, key);
     Dependency.deref(target);
     if (is.obj(value)) Dependency.deref(value[TARGET], true);
   }
 
-  static #compare(newValue, oldValue) {
-    const objectGetter = (obj) => obj[TARGET];
+  static notify(target, key) {
+    const dep = Dependency.get(target, key);
+    // Dependency might not exist if there are no reactions for state data
+    if (dep) dep.notify();
+    return dep;
+  }
+
+  static compare(newValue, oldValue) {
+    const objectGetter = (obj) => obj[TARGET] || obj;
     return equal(newValue, oldValue, objectGetter);
   }
 }
@@ -138,8 +154,10 @@ class ProxyHandler {
   }
 
   set(target, key, value, receiver) {
-    if (is.obj(value)) value = this.#activator.activate(value);
     const replaced = target[key];
+    const isArrayLen = is.arr(target) && key === 'length';
+    if (!isArrayLen && DependencyHandler.compare(value, replaced)) return true;
+    if (is.obj(value)) value = this.#activator.activate(value);
     const isSet = Reflect.set(target, key, value, receiver);
     const isChecked = this.#checkKey(target, key);
     if (isChecked) DependencyHandler.set(target, key, replaced, value);
@@ -147,7 +165,7 @@ class ProxyHandler {
   }
 
   deleteProperty(target, key) {
-    if (!Reflect.has(target, key)) return true;
+    if (!hasOwn(target, key)) return true;
     this.#activator.deactivate(target, key);
     const value = target[key];
     const isChecked = this.#checkKey(target, key);

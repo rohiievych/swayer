@@ -18,6 +18,8 @@ export const SCHEMA_TEXT = 'text';
 export const SCHEMA_ATTRS = 'attrs';
 // Schema classes prop name
 export const SCHEMA_CLASSES = 'classes';
+// Schema events prop name
+export const SCHEMA_EVENTS = 'events';
 // Schema children prop name
 export const SCHEMA_CHILDREN = 'children';
 // Schema model prop name

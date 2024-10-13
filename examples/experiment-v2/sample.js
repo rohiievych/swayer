@@ -3,7 +3,7 @@ import { renderRoot } from '../../lib-v2/renderer.js';
 let addd = 0;
 // setTimeout(() => addd += 1000, 3000);
 // setTimeout(() => addd += 1000, 6000);
-const createArray = (num = 1) => new Array(num).fill(null);
+const createArray = (num = 1000) => new Array(num).fill(null);
 const createItem = (add = addd) => (_, i) => ({
   id: 1 + i + add,
   label: `Item ${1 + i + add}`,

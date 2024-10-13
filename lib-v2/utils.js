@@ -16,8 +16,8 @@ const isFalsyValue = (value) => is.nullish(value)
   || value === ''
   || value === false;
 
-const hasOwn = (object, prop) => Object.hasOwn?.(object, prop)
-  ?? Object.prototype.hasOwnProperty.call(object, prop);
+const hasOwn = (object, prop) =>
+  Object.prototype.hasOwnProperty.call(object, prop);
 
 const isEnumerable = (object, prop) =>
   Object.prototype.propertyIsEnumerable.call(object, prop);
@@ -121,6 +121,19 @@ const normalizePath = (path, sep = '/') => {
   return normalPath;
 };
 
+const createMicroTaskRunner = () => {
+  const tasks = [];
+  return (task) => {
+    tasks.push(task);
+    if (tasks.length === 1) {
+      queueMicrotask(() => {
+        for (const batchedTask of tasks) batchedTask();
+        tasks.length = 0;
+      });
+    }
+  };
+};
+
 const isBrowser = hasOwn(globalThis, 'document');
 const isServer = hasOwn(globalThis, 'process');
 
@@ -134,6 +147,7 @@ export {
   diff,
   camelToKebabCase,
   normalizePath,
+  createMicroTaskRunner,
   isBrowser,
   isServer,
 };
